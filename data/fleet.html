@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B041A">
+<title>Fleet — CriptoHost NerdOS</title>
+<link rel="stylesheet" href="/ch-theme.css">
+<link rel="icon" href="/brand/logo.svg" type="image/svg+xml">
+</head>
+<body data-page="fleet">
+<div class="ch-wrap">
+  <header class="ch-header">
+    <img src="/brand/logo.svg" alt="CriptoHost NerdOS">
+    <span class="ch-worker" id="worker">—</span>
+  </header>
+  <nav class="ch-nav">
+    <a href="/">Home</a>
+    <a href="/fleet.html" class="active">Fleet</a>
+    <a href="/config.html">Config</a>
+    <a href="/ota.html">OTA</a>
+  </nav>
+
+  <div class="ch-grid">
+    <div class="ch-card">
+      <div class="ch-metric-label">Dispositivos online</div>
+      <div class="ch-metric" id="agg-online">0</div>
+    </div>
+    <div class="ch-card">
+      <div class="ch-metric-label">Hashrate total</div>
+      <div class="ch-metric"><span id="agg-hash">0</span> <small>kH/s</small></div>
+    </div>
+    <div class="ch-card">
+      <div class="ch-metric-label">Temp média</div>
+      <div class="ch-metric"><span id="agg-temp">—</span><small>°C</small></div>
+    </div>
+  </div>
+
+  <div class="ch-grid" id="fleet-cards"></div>
+  <p class="ch-muted">Descoberta via mDNS <code>_criptohost._tcp</code> — peer-to-peer, sem servidor central. Atualiza a cada 10 s.</p>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

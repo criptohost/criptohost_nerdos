@@ -1,0 +1,13 @@
+{
+  "name": "CriptoHost NerdOS — LilyGO T-Display S3",
+  "version": "v0.1.0-alpha",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "firmware/criptohost-nerdos-ch-tdisplay-s3-factory.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

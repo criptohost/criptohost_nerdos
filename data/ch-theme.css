@@ -1,0 +1,128 @@
+/* ============================================================
+   CriptoHost NerdOS — Tema oficial (data/ch-theme.css)
+   Base: Design System Cripto Host (documento canônico no Claude Design)
+   Regra: NENHUM componente usa cor/fonte fora destes tokens.
+   Tokens marcados com [DS] devem ser preenchidos com os valores
+   exportados do design system oficial.
+   ============================================================ */
+
+:root {
+  /* ---- Cores base ---- */
+  --ch-bg-base:       #0B041A;   /* oficial — theme-color do cripto.host */
+  --ch-bg-surface:    #150A2E;   /* [DS] superfície de cards (placeholder derivado) */
+  --ch-bg-elevated:   #1E1140;   /* [DS] modais, dropdowns */
+  --ch-border:        #2A1B52;   /* [DS] bordas de cards */
+
+  /* ---- Marca / ação ---- */
+  --ch-primary:       #8B5CF6;   /* [DS] roxo primário (placeholder) */
+  --ch-primary-hover: #7C3AED;   /* [DS] */
+  --ch-accent:        #C084FC;   /* [DS] acento p/ gradientes */
+  --ch-gradient:      linear-gradient(135deg, var(--ch-primary), var(--ch-accent));
+
+  /* ---- Estados ---- */
+  --ch-success:       #34D399;   /* [DS] status Mining / Online */
+  --ch-warning:       #FBBF24;   /* [DS] temperatura alta */
+  --ch-danger:        #F87171;   /* [DS] rejected / restart / factory reset */
+  --ch-info:          #60A5FA;   /* [DS] links informativos */
+
+  /* ---- Tipografia ---- */
+  --ch-text-primary:  #F4F1FA;   /* [DS] */
+  --ch-text-muted:    #9B8FC0;   /* [DS] labels e legendas */
+  --ch-font-display:  'Inter', system-ui, sans-serif;      /* [DS] títulos */
+  --ch-font-body:     'Inter', system-ui, sans-serif;      /* [DS] corpo */
+  --ch-font-mono:     'JetBrains Mono', ui-monospace, monospace; /* [DS] métricas */
+
+  /* ---- Geometria ---- */
+  --ch-radius:        12px;      /* [DS] botões, inputs */
+  --ch-radius-lg:     20px;      /* [DS] cards */
+  --ch-gap:           16px;      /* [DS] espaçamento base */
+  --ch-gap-lg:        24px;      /* [DS] */
+
+  /* ---- Sombras/brilho (dark) ---- */
+  --ch-glow:          0 0 24px rgba(139, 92, 246, 0.25);  /* [DS] */
+}
+
+/* ---- Base ---- */
+body {
+  background: var(--ch-bg-base);
+  color: var(--ch-text-primary);
+  font-family: var(--ch-font-body);
+  margin: 0;
+}
+
+/* ---- Componentes canônicos do dashboard ---- */
+.ch-card {
+  background: var(--ch-bg-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius-lg);
+  padding: var(--ch-gap-lg);
+}
+
+.ch-metric {                     /* hashrate, shares, uptime */
+  font-family: var(--ch-font-mono);
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ch-metric-label {
+  color: var(--ch-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.ch-btn {
+  background: var(--ch-gradient);
+  color: var(--ch-text-primary);
+  border: 0;
+  border-radius: var(--ch-radius);
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ch-btn:hover { filter: brightness(1.1); box-shadow: var(--ch-glow); }
+.ch-btn--ghost  { background: transparent; border: 1px solid var(--ch-border); }
+.ch-btn--danger { background: var(--ch-danger); }
+
+.ch-badge--mining  { color: var(--ch-success); }
+.ch-badge--offline { color: var(--ch-danger); }
+
+/* Barra de navegação (Home · Fleet · Config · OTA) */
+.ch-nav { display: flex; gap: var(--ch-gap); border-bottom: 1px solid var(--ch-border); }
+.ch-nav a { color: var(--ch-text-muted); text-decoration: none; padding: 14px 18px; }
+.ch-nav a.active {
+  color: var(--ch-text-primary);
+  border-bottom: 2px solid var(--ch-primary);
+}
+
+/* ---- Layout do dashboard (complemento ao tema oficial) ---- */
+* { box-sizing: border-box; }
+.ch-wrap { max-width: 1080px; margin: 0 auto; padding: var(--ch-gap); }
+.ch-header { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+.ch-header img { height: 28px; }
+.ch-header .ch-title { font-family: var(--ch-font-display); font-weight: 700; font-size: 1.1rem; }
+.ch-header .ch-worker { color: var(--ch-text-muted); font-family: var(--ch-font-mono); font-size: 0.85rem; margin-left: auto; }
+.ch-grid { display: grid; gap: var(--ch-gap); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: var(--ch-gap); }
+.ch-grid--wide { grid-template-columns: 1fr; }
+.ch-kv { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed var(--ch-border); font-size: 0.9rem; }
+.ch-kv:last-child { border-bottom: 0; }
+.ch-kv b { font-family: var(--ch-font-mono); font-weight: 600; }
+.ch-log { font-family: var(--ch-font-mono); font-size: 0.78rem; max-height: 220px; overflow-y: auto; }
+.ch-log div { padding: 3px 0; border-bottom: 1px dashed var(--ch-border); }
+.ch-log .reject { color: var(--ch-danger); }
+.ch-log .accept { color: var(--ch-success); }
+.ch-log .block { color: var(--ch-warning); font-weight: 700; }
+.ch-gauge { width: 100%; height: 10px; background: var(--ch-bg-elevated); border-radius: 5px; overflow: hidden; margin-top: 8px; }
+.ch-gauge > div { height: 100%; background: var(--ch-gradient); border-radius: 5px; transition: width 0.6s; }
+.ch-form label { display: block; color: var(--ch-text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 6px; }
+.ch-form input, .ch-form select {
+  width: 100%; padding: 11px 14px; border-radius: var(--ch-radius);
+  background: var(--ch-bg-elevated); border: 1px solid var(--ch-border);
+  color: var(--ch-text-primary); font-family: var(--ch-font-mono); font-size: 0.9rem;
+}
+.ch-form input:focus, .ch-form select:focus { outline: none; border-color: var(--ch-primary); }
+.ch-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: var(--ch-gap-lg); }
+.ch-fleet-card h3 { margin: 0 0 8px; font-size: 1rem; font-family: var(--ch-font-mono); }
+.ch-muted { color: var(--ch-text-muted); font-size: 0.8rem; }
+.ch-progress-text { font-family: var(--ch-font-mono); margin-top: 8px; }
+@media (max-width: 640px) { .ch-metric { font-size: 1.9rem; } }

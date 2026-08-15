@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B041A">
+<title>Config — CriptoHost NerdOS</title>
+<link rel="stylesheet" href="/ch-theme.css">
+<link rel="icon" href="/brand/logo.svg" type="image/svg+xml">
+</head>
+<body data-page="config">
+<div class="ch-wrap">
+  <header class="ch-header">
+    <img src="/brand/logo.svg" alt="CriptoHost NerdOS">
+    <span class="ch-worker" id="worker">—</span>
+  </header>
+  <nav class="ch-nav">
+    <a href="/">Home</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/config.html" class="active">Config</a>
+    <a href="/ota.html">OTA</a>
+  </nav>
+
+  <div class="ch-grid ch-grid--wide">
+    <form class="ch-card ch-form" id="cfg-form">
+      <div class="ch-metric-label">Mineração</div>
+
+      <label for="profile">Perfil de pool</label>
+      <select id="profile">
+        <option value="">— personalizado —</option>
+        <option value="eu.digi.hmpool.io|3337">DigiByte · hmpool (default)</option>
+        <option value="pool.nerdminers.org|3333">Bitcoin · nerdminers.org</option>
+        <option value="pool.nerdminer.io|3333">Bitcoin · nerdminer.io</option>
+        <option value="xec.mining-dutch.nl|9998">eCash · mining-dutch</option>
+        <option value="bch.mining-dutch.nl|9985">Bitcoin Cash · mining-dutch</option>
+      </select>
+
+      <label for="pool">Pool address</label>
+      <input id="pool" required minlength="4" maxlength="128" placeholder="eu.digi.hmpool.io">
+
+      <label for="port">Pool port</label>
+      <input id="port" type="number" required min="1" max="65535" placeholder="3337">
+
+      <label for="wallet">Wallet.worker</label>
+      <input id="wallet" required minlength="8" maxlength="79" placeholder="SUACARTEIRA.CH-DevKit-01">
+
+      <label for="password">Password / difficulty</label>
+      <input id="password" maxlength="79" placeholder="x ou d=0.001">
+
+      <div class="ch-actions">
+        <button type="submit" class="ch-btn">Save &amp; Restart</button>
+      </div>
+      <p class="ch-muted" id="cfg-msg"></p>
+    </form>
+
+    <div class="ch-card">
+      <div class="ch-metric-label">Ações do dispositivo</div>
+      <div class="ch-actions">
+        <button class="ch-btn ch-btn--ghost" id="btn-identify">Identify (piscar LED)</button>
+        <button class="ch-btn ch-btn--ghost" id="btn-restart">Restart</button>
+        <button class="ch-btn ch-btn--danger" id="btn-factory">Factory Reset</button>
+      </div>
+      <p class="ch-muted">Factory reset apaga Wi-Fi e configuração e volta ao portal <b>CriptoHostAP</b>. Pede confirmação dupla.</p>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

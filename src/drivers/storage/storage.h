@@ -6,16 +6,24 @@
 // config files
 
 // default settings
-#ifndef HAN
+#ifdef CH_BUILD
+// CH: provisionamento CriptoHostAP + pool DGB low-diff como default (escopo §3.1)
+#define DEFAULT_SSID		"CriptoHostAP"
+#elif !defined(HAN)
 #define DEFAULT_SSID		"NerdMinerAP"
 #else
 #define DEFAULT_SSID		"HanSoloAP"
 #endif
 #define DEFAULT_WIFIPW		"MineYourCoins"
+#ifdef CH_BUILD
+#define DEFAULT_POOLURL		"eu.digi.hmpool.io"
+#define DEFAULT_POOLPORT	3337
+#else
 #define DEFAULT_POOLURL		"public-pool.io"
+#define DEFAULT_POOLPORT	3333
+#endif
 #define DEFAULT_POOLPASS	"x"
 #define DEFAULT_WALLETID	"yourBtcAddress"
-#define DEFAULT_POOLPORT	3333
 #define DEFAULT_TIMEZONE	2
 #define DEFAULT_SAVESTATS	false
 #define DEFAULT_INVERTCOLORS	false

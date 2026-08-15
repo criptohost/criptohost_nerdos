@@ -1,0 +1,13 @@
+{
+  "name": "CriptoHost NerdOS — ESP32 DevKit V1",
+  "version": "v0.1.0-alpha",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/criptohost-nerdos-ch-devkit-v1-factory.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

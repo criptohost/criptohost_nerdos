@@ -2,7 +2,13 @@
 
 #ifdef NVMEM_SPIFFS
 
+#ifdef CH_BUILD
+// CH: M0-04 — LittleFS em vez de SPIFFS (mesma API do FS)
+#include <LittleFS.h>
+#define SPIFFS LittleFS
+#else
 #include <SPIFFS.h>
+#endif
 #include <FS.h>
 #include <ArduinoJson.h>
 

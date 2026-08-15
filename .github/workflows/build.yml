@@ -1,0 +1,40 @@
+name: build
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ch-devkit-v1, ch-esp32s3, ch-tdisplay-s3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: pio-${{ matrix.target }}-${{ hashFiles('platformio.ini') }}
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Build firmware
+        run: pio run -e ${{ matrix.target }}
+      - name: Build filesystem (dashboard LittleFS)
+        run: pio run -e ${{ matrix.target }} -t buildfs
+      - name: Rename artifacts
+        run: |
+          mkdir -p out
+          cp .pio/build/${{ matrix.target }}/firmware.bin out/criptohost-nerdos-${{ matrix.target }}.bin
+          cp .pio/build/${{ matrix.target }}/littlefs.bin out/criptohost-nerdos-${{ matrix.target }}-littlefs.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: criptohost-nerdos-${{ matrix.target }}
+          path: out/*.bin

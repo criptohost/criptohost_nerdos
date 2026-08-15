@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B041A">
+<title>OTA — CriptoHost NerdOS</title>
+<link rel="stylesheet" href="/ch-theme.css">
+<link rel="icon" href="/brand/logo.svg" type="image/svg+xml">
+</head>
+<body data-page="ota">
+<div class="ch-wrap">
+  <header class="ch-header">
+    <img src="/brand/logo.svg" alt="CriptoHost NerdOS">
+    <span class="ch-worker" id="worker">—</span>
+  </header>
+  <nav class="ch-nav">
+    <a href="/">Home</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/config.html">Config</a>
+    <a href="/ota.html" class="active">OTA</a>
+  </nav>
+
+  <div class="ch-grid ch-grid--wide">
+    <div class="ch-card">
+      <div class="ch-metric-label">Atualização de firmware (OTA)</div>
+      <p>Envie o <code>.bin</code> do target correto (<span id="fw-hw">—</span>). Firmware atual: <b id="fw-cur">—</b></p>
+      <form class="ch-form" id="ota-form">
+        <input type="file" id="ota-file" accept=".bin" required>
+        <div class="ch-actions">
+          <button type="submit" class="ch-btn" id="ota-btn">Enviar e atualizar</button>
+        </div>
+      </form>
+      <div class="ch-gauge"><div id="ota-bar" style="width:0%"></div></div>
+      <div class="ch-progress-text" id="ota-msg">Aguardando arquivo…</div>
+      <p class="ch-muted">⚠️ Não desligue nem desconecte o dispositivo durante o update. A configuração (pool/wallet/Wi-Fi) é preservada. Binário inválido é rejeitado sem risco de brick.</p>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

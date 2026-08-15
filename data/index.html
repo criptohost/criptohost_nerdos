@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B041A">
+<title>CriptoHost NerdOS</title>
+<link rel="stylesheet" href="/ch-theme.css">
+<link rel="icon" href="/brand/logo.svg" type="image/svg+xml">
+</head>
+<body data-page="home">
+<div class="ch-wrap">
+  <header class="ch-header">
+    <img src="/brand/logo.svg" alt="CriptoHost NerdOS">
+    <span class="ch-worker" id="worker">—</span>
+  </header>
+  <nav class="ch-nav">
+    <a href="/" class="active">Home</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/config.html">Config</a>
+    <a href="/ota.html">OTA</a>
+  </nav>
+
+  <div class="ch-grid">
+    <div class="ch-card">
+      <div class="ch-metric-label">Hashrate</div>
+      <div class="ch-metric"><span id="hashrate">0.0</span> <small>kH/s</small></div>
+      <div class="ch-gauge"><div id="gauge" style="width:0%"></div></div>
+      <div class="ch-muted" id="status-line">conectando…</div>
+    </div>
+    <div class="ch-card">
+      <div class="ch-metric-label">Shares</div>
+      <div class="ch-kv"><span>Found (32-bit)</span><b id="sh-found">0</b></div>
+      <div class="ch-kv"><span>Sent</span><b id="sh-sent">0</b></div>
+      <div class="ch-kv"><span>Accepted</span><b id="sh-accepted" class="ch-badge--mining">0</b></div>
+      <div class="ch-kv"><span>Rejected</span><b id="sh-rejected" class="ch-badge--offline">0</b></div>
+      <div class="ch-kv"><span>Pending</span><b id="sh-pending">0</b></div>
+      <div class="ch-kv"><span>Eficiência</span><b id="sh-eff">—</b></div>
+    </div>
+    <div class="ch-card">
+      <div class="ch-metric-label">Dispositivo</div>
+      <div class="ch-kv"><span>Best difficulty</span><b id="bestdiff">0</b></div>
+      <div class="ch-kv"><span>Templates</span><b id="templates">0</b></div>
+      <div class="ch-kv"><span>Blocos válidos</span><b id="valids">0</b></div>
+      <div class="ch-kv"><span>Uptime</span><b id="uptime">—</b></div>
+      <div class="ch-kv"><span>Temperatura</span><b id="temp">—</b></div>
+      <div class="ch-kv"><span>Wi-Fi RSSI</span><b id="rssi">—</b></div>
+      <div class="ch-kv"><span>Pool</span><b id="pool" style="font-size:0.75rem">—</b></div>
+    </div>
+    <div class="ch-card">
+      <div class="ch-metric-label">Mercado <span class="ch-muted" id="mkt-age"></span></div>
+      <div class="ch-kv"><span>BTC</span><b id="px-btc">—</b></div>
+      <div class="ch-kv"><span>DGB</span><b id="px-dgb">—</b></div>
+      <div class="ch-kv"><span>XEC</span><b id="px-xec">—</b></div>
+      <div class="ch-muted">CoinGecko · cache 5 min · falha não afeta a mineração</div>
+    </div>
+  </div>
+
+  <div class="ch-grid ch-grid--wide">
+    <div class="ch-card">
+      <div class="ch-metric-label">Share stream · Connection log</div>
+      <div class="ch-log" id="log"></div>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B041A">
+<title>Web Flasher — CriptoHost NerdOS</title>
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+  :root { --bg:#0B041A; --surface:#150A2E; --border:#2A1B52; --primary:#8B5CF6; --accent:#C084FC; --text:#F4F1FA; --muted:#9B8FC0; }
+  body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; margin:0; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+  h1 { font-size: 1.6rem; } h1 small { color: var(--muted); font-weight: 400; display:block; font-size: .9rem; }
+  .card { background: var(--surface); border:1px solid var(--border); border-radius: 20px; padding: 24px; margin-top: 16px; }
+  select { width:100%; padding: 12px; border-radius: 12px; background:#1E1140; color:var(--text); border:1px solid var(--border); font-family: ui-monospace, monospace; margin: 12px 0 20px; }
+  esp-web-install-button { --esp-tools-button-color: #fff; }
+  esp-web-install-button::part(button) { background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; padding: 12px 20px; font-weight: 600; border: 0; }
+  .muted { color: var(--muted); font-size: .85rem; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚡ CriptoHost NerdOS <small>Web flasher — flash direto pelo navegador (Chrome/Edge, via USB)</small></h1>
+  <div class="card">
+    <label for="target">Placa</label>
+    <select id="target">
+      <option value="manifest-ch-devkit-v1.json">ESP32 DevKit V1 (recomendado)</option>
+      <option value="manifest-ch-esp32s3.json">ESP32-S3 DevKitC (headless)</option>
+      <option value="manifest-ch-tdisplay-s3.json">LilyGO T-Display S3</option>
+    </select>
+    <esp-web-install-button id="btn" manifest="manifest-ch-devkit-v1.json"></esp-web-install-button>
+    <p class="muted">1. Conecte a placa via USB · 2. Clique em Install · 3. Após o flash, conecte no AP <b>CriptoHostAP</b> para configurar Wi-Fi, pool e wallet.</p>
+  </div>
+  <p class="muted">Código GPL-3.0 · marca Cripto Host protegida — <a href="https://github.com/criptohost/criptohost-nerdos">github.com/criptohost/criptohost-nerdos</a></p>
+</div>
+<script>
+  document.getElementById("target").addEventListener("change", function () {
+    document.getElementById("btn").setAttribute("manifest", this.value);
+  });
+</script>
+</body>
+</html>

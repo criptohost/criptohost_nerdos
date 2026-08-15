@@ -52,6 +52,11 @@ uint64_t upTime = 0;
 volatile uint32_t shares; // increase if blockhash has 32 bits of zeroes
 volatile uint32_t valids; // increased if blockhash <= target
 
+// CH: contadores do contrato /api/status (found/sent/accepted/rejected)
+volatile uint32_t ch_shares_sent = 0;
+volatile uint32_t ch_shares_accepted = 0;
+volatile uint32_t ch_shares_rejected = 0;
+
 // Track best diff
 double best_diff = 0.0;
 
@@ -439,6 +444,7 @@ void runStratumWorker(void *name) {
                                         auto itt = s_submition_map.find(id);
                                         if (itt != s_submition_map.end())
                                         {
+                                          ch_shares_accepted++;
                                           if (itt->second->diff > best_diff)
                                             best_diff = itt->second->diff;
                                           if (itt->second->is32bit)
@@ -457,6 +463,7 @@ void runStratumWorker(void *name) {
                                         auto itt = s_submition_map.find(id);
                                         if (itt != s_submition_map.end())
                                         {
+                                          ch_shares_rejected++;
                                           Serial.printf("Refuse submition %d\n", id);
                                           s_submition_map.erase(itt);
                                         }
@@ -556,6 +563,7 @@ void runStratumWorker(void *name) {
           break;
         unsigned long sumbit_id = 0;
         tx_mining_submit(client, mWorker, mJob, res->nonce, sumbit_id);
+        ch_shares_sent++;
         Serial.print("   - Current diff share: "); Serial.println(res->difficulty,12);
         Serial.print("   - Current pool diff : "); Serial.println(currentPoolDifficulty,12);
         Serial.print("   - TX SHARE: ");

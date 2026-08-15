@@ -1,0 +1,13 @@
+{
+  "name": "CriptoHost NerdOS — ESP32-S3 DevKitC",
+  "version": "v0.1.0-alpha",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "firmware/criptohost-nerdos-ch-esp32s3-factory.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

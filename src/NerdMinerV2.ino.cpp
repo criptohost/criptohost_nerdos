@@ -20,6 +20,11 @@
 #include "TouchHandler.h"
 #endif
 
+#ifdef CH_BUILD
+#include "ch/ch_web.h"
+#include "ch/ch_mdns.h"
+#endif
+
 #include <soc/soc_caps.h>
 //#define HW_SHA256_TEST
 
@@ -215,6 +220,17 @@ void loop() {
   touchHandler.isTouched();
 #endif
   wifiManagerProcess(); // avoid delays() in loop when non-blocking and other long running code
+
+#ifdef CH_BUILD
+  // CH: dashboard/API/mDNS sobem uma vez, assim que o WiFi conectar
+  static bool chStarted = false;
+  if (!chStarted && WiFi.status() == WL_CONNECTED) {
+    chStarted = true;
+    ch_mdns_setup();
+    ch_web_setup();
+  }
+  if (chStarted) ch_web_loop();
+#endif
 
   vTaskDelay(50 / portTICK_PERIOD_MS);
 }
