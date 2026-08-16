@@ -8,6 +8,12 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8091
+WORKER = sys.argv[2] if len(sys.argv) > 2 else "CH-DevKit-01"
+HW = sys.argv[3] if len(sys.argv) > 3 else "ESP32 DevKit V1"
+BASE_KHS = float(sys.argv[4]) if len(sys.argv) > 4 else 356.2
+# instância principal (8091) enxerga peers fake nas portas 8092/8093
+PEERS = [{"worker": "CH-S3-02", "fw": "v0.1.0-alpha", "hardware": "ESP32-S3", "ip": "localhost", "port": 8092},
+         {"worker": "CH-TDS3-03", "fw": "v0.1.0-alpha", "hardware": "LilyGO T-Display S3", "ip": "localhost", "port": 8093}] if PORT == 8091 else []
 T0 = time.time()
 
 def status():
@@ -15,9 +21,9 @@ def status():
     acc = 241 + up % 50
     rej = 10
     return {
-        "worker": "CH-DevKit-01", "ip": "192.168.1.66",
-        "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
-        "status": "mining", "hashrate_khs": 356.2 + random.uniform(-8, 8),
+        "worker": WORKER, "ip": "192.168.1.%d" % (60 + PORT % 10),
+        "hardware": HW, "fw": "v0.1.0-alpha",
+        "status": "mining", "hashrate_khs": BASE_KHS + random.uniform(-8, 8),
         "temp_c": 53.0 + random.uniform(-2, 2), "rssi_dbm": -52,
         "uptime_s": up, "pool": "eu.digi.hmpool.io:3337",
         "shares": {"found": 251, "sent": acc + rej + 1, "accepted": acc, "rejected": rej, "pending": 1},
@@ -39,6 +45,10 @@ class H(SimpleHTTPRequestHandler):
     def log_message(self, *a):  # silencioso
         pass
 
+    def end_headers(self):  # dev: nunca cachear
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def _json(self, obj, code=200):
         b = json.dumps(obj).encode()
         self.send_response(code)
@@ -53,10 +63,10 @@ class H(SimpleHTTPRequestHandler):
         if self.path == "/api/events": return self._json(EVENTS)
         if self.path == "/api/config":
             return self._json({"pool": "eu.digi.hmpool.io", "port": 3337,
-                               "wallet": "DAbCdEf123.CH-DevKit-01", "password": "x",
+                               "wallet": "DAbCdEf123." + WORKER, "password": "x",
                                "timezone": 2, "fw": "v0.1.0-alpha", "hardware": "ESP32 DevKit V1"})
         if self.path == "/api/fleet":
-            return self._json({"self": status(), "peers": []})
+            return self._json({"self": status(), "peers": PEERS})
         if self.path == "/api/bench":
             return self._json({"sw_khs": 78.4, "live_khs": 356.2, "method": "hw"})
         return super().do_GET()

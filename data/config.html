@@ -10,59 +10,57 @@
 </head>
 <body data-page="config">
 <div class="ch-wrap">
-  <header class="ch-header">
-    <img src="/brand/logo.svg" alt="CriptoHost NerdOS">
-    <span class="ch-worker" id="worker">—</span>
+
+  <header class="ch-appbar">
+    <a href="/"><img src="/brand/logo.svg" alt="CriptoHost NerdOS"></a>
+    <nav class="ch-nav-pills">
+      <a href="/"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 7l6-5 6 5v7H9v-4H7v4H2z"/></svg>Home</a>
+      <a href="/fleet.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Fleet</a>
+      <a href="/config.html" class="active"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg>Config</a>
+      <a href="/ota.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 11V3M4.5 6.5L8 3l3.5 3.5M3 13h10"/></svg>OTA</a>
+      <a href="#" id="pool-link" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 9.5l7-7M9 2.5h4.5V7M13 9.5V13a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1h3.5"/></svg>Pool</a>
+    </nav>
+    <span class="ch-pill ch-pill--offline" id="statuspill">…</span>
   </header>
-  <nav class="ch-nav">
-    <a href="/">Home</a>
-    <a href="/fleet.html">Fleet</a>
-    <a href="/config.html" class="active">Config</a>
-    <a href="/ota.html">OTA</a>
-  </nav>
 
-  <div class="ch-grid ch-grid--wide">
-    <form class="ch-card ch-form" id="cfg-form">
-      <div class="ch-metric-label">Mineração</div>
-
-      <label for="profile">Perfil de pool</label>
-      <select id="profile">
-        <option value="">— personalizado —</option>
-        <option value="eu.digi.hmpool.io|3337">DigiByte · hmpool (default)</option>
-        <option value="pool.nerdminers.org|3333">Bitcoin · nerdminers.org</option>
-        <option value="pool.nerdminer.io|3333">Bitcoin · nerdminer.io</option>
-        <option value="xec.mining-dutch.nl|9998">eCash · mining-dutch</option>
-        <option value="bch.mining-dutch.nl|9985">Bitcoin Cash · mining-dutch</option>
-      </select>
-
-      <label for="pool">Pool address</label>
-      <input id="pool" required minlength="4" maxlength="128" placeholder="eu.digi.hmpool.io">
-
-      <label for="port">Pool port</label>
-      <input id="port" type="number" required min="1" max="65535" placeholder="3337">
-
-      <label for="wallet">Wallet.worker</label>
-      <input id="wallet" required minlength="8" maxlength="79" placeholder="SUACARTEIRA.CH-DevKit-01">
-
-      <label for="password">Password / difficulty</label>
-      <input id="password" maxlength="79" placeholder="x ou d=0.001">
-
-      <div class="ch-actions">
-        <button type="submit" class="ch-btn">Save &amp; Restart</button>
-      </div>
-      <p class="ch-muted" id="cfg-msg"></p>
-    </form>
-
-    <div class="ch-card">
-      <div class="ch-metric-label">Ações do dispositivo</div>
-      <div class="ch-actions">
-        <button class="ch-btn ch-btn--ghost" id="btn-identify">Identify (piscar LED)</button>
-        <button class="ch-btn ch-btn--ghost" id="btn-restart">Restart</button>
-        <button class="ch-btn ch-btn--danger" id="btn-factory">Factory Reset</button>
-      </div>
-      <p class="ch-muted">Factory reset apaga Wi-Fi e configuração e volta ao portal <b>CriptoHostAP</b>. Pede confirmação dupla.</p>
-    </div>
+  <div class="ch-card ch-pagehead">
+    <div class="ch-metric-label"><span class="hl">Miner</span> Settings</div>
+    <h1>Configuration <small>Altere pool e worker sem passar pelo captive portal.</small></h1>
   </div>
+
+  <form class="ch-card ch-form" id="cfg-form">
+    <label for="profile">Perfil de pool</label>
+    <select id="profile">
+      <option value="">— personalizado —</option>
+      <option value="eu.digi.hmpool.io|3337">DigiByte · hmpool (default)</option>
+      <option value="pool.nerdminers.org|3333">Bitcoin · nerdminers.org</option>
+      <option value="pool.nerdminer.io|3333">Bitcoin · nerdminer.io</option>
+      <option value="xec.mining-dutch.nl|9998">eCash · mining-dutch</option>
+      <option value="bch.mining-dutch.nl|9985">Bitcoin Cash · mining-dutch</option>
+    </select>
+
+    <label for="pool">Pool address</label>
+    <input id="pool" required minlength="4" maxlength="128" placeholder="eu.digi.hmpool.io">
+
+    <label for="port">Pool port</label>
+    <input id="port" type="number" required min="1" max="65535" placeholder="3337">
+
+    <label for="wallet">Wallet.worker</label>
+    <input id="wallet" required minlength="8" maxlength="79" placeholder="SUACARTEIRA.CH-DevKit-01">
+    <div class="ch-help">O sufixo após o ponto identifica este nó no Fleet (ex.: <code>CH-DevKit-01</code>).</div>
+
+    <label for="password">Pool password / difficulty</label>
+    <input id="password" maxlength="79" placeholder="x ou d=0.001">
+    <div class="ch-help">Opcional. Enviado exatamente como digitado na autorização Stratum.</div>
+
+    <div class="ch-actions">
+      <button type="submit" class="ch-btn">Save and restart</button>
+      <a class="ch-btn ch-btn--ghost" href="/">Cancel</a>
+    </div>
+    <p class="ch-muted" id="cfg-msg"></p>
+  </form>
+
+  <p class="ch-caption">A configuração é persistida em flash e aplicada após o reinício automático.</p>
 </div>
 <script src="/app.js"></script>
 </body>
