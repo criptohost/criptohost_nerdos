@@ -98,15 +98,15 @@ void ch_state_tick()
   static bool lMining = false;
 
   uint32_t v;
-  if ((v = ch_shares_sent)     != lSent)  { ch_log_event("share",  "Share enviado #" + String(v));       lSent = v; }
-  if ((v = ch_shares_accepted) != lAcc)   { ch_log_event("accept", "Share aceito pela pool");            lAcc = v; }
-  if ((v = ch_shares_rejected) != lRej)   { ch_log_event("reject", "Share rejeitado pela pool");         lRej = v; }
+  if ((v = ch_shares_sent)     != lSent)  { ch_log_event("share",  "Share sent #" + String(v));           lSent = v; }
+  if ((v = ch_shares_accepted) != lAcc)   { ch_log_event("accept", "Share accepted by pool");            lAcc = v; }
+  if ((v = ch_shares_rejected) != lRej)   { ch_log_event("reject", "Share rejected by pool");            lRej = v; }
   if ((v = templates)          != lTpl)   { if (v % 25 == 0) ch_log_event("job", "Template #" + String(v)); lTpl = v; }
-  if ((v = valids)             != lValid) { ch_log_event("block",  "BLOCO VALIDO ENCONTRADO!");          lValid = v; }
+  if ((v = valids)             != lValid) { ch_log_event("block",  "VALID BLOCK FOUND!");               lValid = v; }
 
   bool mining = elapsedKHs > 0;
   if (mining != lMining) {
-    ch_log_event("conn", mining ? "Minerando em " + Settings.PoolAddress : "Hashrate zerado — verificando pool");
+    ch_log_event("conn", mining ? "Mining on " + Settings.PoolAddress : "Hashrate idle — checking pool");
     lMining = mining;
   }
 }

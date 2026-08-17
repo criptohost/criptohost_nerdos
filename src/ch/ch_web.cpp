@@ -61,7 +61,7 @@ static String configJson()
 static void handleConfigPost(AsyncWebServerRequest* req, uint8_t* data, size_t len)
 {
   StaticJsonDocument<512> doc;
-  if (deserializeJson(doc, data, len)) { sendJson(req, "{\"error\":\"json invalido\"}", 400); return; }
+  if (deserializeJson(doc, data, len)) { sendJson(req, "{\"error\":\"invalid json\"}", 400); return; }
 
   // Validação mínima de campos (trust boundary)
   String pool = doc["pool"] | Settings.PoolAddress;
@@ -71,7 +71,7 @@ static void handleConfigPost(AsyncWebServerRequest* req, uint8_t* data, size_t l
   pool.trim(); wallet.trim();
   if (pool.length() < 4 || pool.length() > 128 || port < 1 || port > 65535 ||
       wallet.length() < 8 || wallet.length() >= 80 || pass.length() >= 80) {
-    sendJson(req, "{\"error\":\"campos invalidos\"}", 400); return;
+    sendJson(req, "{\"error\":\"invalid fields\"}", 400); return;
   }
 
   Settings.PoolAddress = pool;
@@ -80,7 +80,7 @@ static void handleConfigPost(AsyncWebServerRequest* req, uint8_t* data, size_t l
   strncpy(Settings.PoolPassword, pass.c_str(), sizeof(Settings.PoolPassword) - 1);
   if (doc.containsKey("timezone")) Settings.Timezone = doc["timezone"].as<int>();
   nvMem.saveConfig(&Settings);
-  ch_log_event("conn", "Config salva — reiniciando");
+  ch_log_event("conn", "Config saved — restarting");
   sendJson(req, "{\"ok\":true,\"restarting\":true}");
   s_restartPending = true; // Save & Restart (M2-04)
 }
@@ -92,12 +92,12 @@ static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t 
   if (index == 0) {
     s_otaOk = false;
     if (len < 1 || data[0] != 0xE9) { // magic byte de imagem ESP32 (M2-07)
-      req->send(400, "application/json", "{\"error\":\"binario invalido (magic byte)\"}");
+      req->send(400, "application/json", "{\"error\":\"invalid binary (magic byte)\"}");
       return;
     }
     Serial.printf("[CH] OTA start: %s\n", filename.c_str());
     if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-      req->send(500, "application/json", "{\"error\":\"sem espaco para OTA\"}");
+      req->send(500, "application/json", "{\"error\":\"no space for OTA\"}");
       return;
     }
     s_otaOk = true;
@@ -109,7 +109,7 @@ static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t 
   if (final && s_otaOk) {
     if (Update.end(true)) {
       Serial.println("[CH] OTA concluido");
-      ch_log_event("conn", "OTA aplicado — reiniciando");
+      ch_log_event("conn", "OTA applied — restarting");
     } else {
       s_otaOk = false;
       Serial.printf("[CH] OTA erro: %s\n", Update.errorString());
@@ -161,7 +161,7 @@ void ch_web_setup()
 
   server.on("/api/identify", HTTP_POST, [](AsyncWebServerRequest* r) {
     s_identifyUntil = millis() + 10000;
-    ch_log_event("conn", "Identify acionado");
+    ch_log_event("conn", "Identify triggered");
     sendJson(r, "{\"ok\":true}");
   });
 
@@ -184,7 +184,7 @@ void ch_web_setup()
   server.on("/api/ota", HTTP_POST, [](AsyncWebServerRequest* r) {
     bool ok = s_otaOk && !Update.hasError();
     r->send(ok ? 200 : 500, "application/json",
-            ok ? "{\"ok\":true,\"restarting\":true}" : "{\"error\":\"falha no update\"}");
+            ok ? "{\"ok\":true,\"restarting\":true}" : "{\"error\":\"update failed\"}");
     if (ok) s_restartPending = true;
   }, handleOtaUpload);
 

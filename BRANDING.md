@@ -58,12 +58,12 @@ A Cripto Host reserva-se o direito de requerer a adequação de usos que violem 
 | Token | Valor | Uso |
 |---|---|---|
 | `--ch-bg-base` | `#0B041A` | Fundo principal (dark roxo profundo — cor oficial do site) |
-| `--ch-bg-surface` | *(preencher do DS)* | Cards e superfícies |
-| `--ch-primary` | *(preencher do DS)* | Ações primárias, links, destaque de hashrate |
-| `--ch-accent` | *(preencher do DS)* | Gradientes, estados ativos |
-| `--ch-success` / `--ch-warning` / `--ch-danger` | *(preencher do DS)* | Status Mining / Temp alta / Rejected & Restart |
-| `--ch-text-primary` / `--ch-text-muted` | *(preencher do DS)* | Tipografia |
-| `--ch-font-display` / `--ch-font-body` / `--ch-font-mono` | *(preencher do DS)* | Títulos / corpo / métricas numéricas |
-| `--ch-radius` / `--ch-radius-lg` | *(preencher do DS)* | Bordas de cards e botões |
+| `--ch-bg-surface` | `rgba(21, 10, 46, 0.72)` | Cards e superfícies (glass) |
+| `--ch-primary` | `#8B5CF6` | Ações primárias, links, destaque de hashrate |
+| `--ch-accent` | `#C4B5FD` | Gradientes, estados ativos, kickers |
+| `--ch-success` / `--ch-warning` / `--ch-danger` | `#34D399` / `#FBBF24` / `#F87171` | Status Mining / Temp alta / Rejected & Restart |
+| `--ch-text-primary` / `--ch-text-muted` | `#F4F1FA` / `#A89BC4` | Tipografia |
+| `--ch-font-display` / `--ch-font-body` / `--ch-font-mono` | Urbanist / Urbanist / JetBrains Mono | Títulos / corpo / métricas numéricas |
+| `--ch-radius` / `--ch-radius-lg` | `12px` / `20px` | Bordas de botões e cards |
 
 O arquivo de implementação é [`data/ch-theme.css`](data/ch-theme.css); nenhum componente da UI deve usar cor/fonte hardcoded fora desses tokens.
