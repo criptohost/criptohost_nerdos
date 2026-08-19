@@ -29,7 +29,7 @@ pio run -e ch-devkit-v1 -t uploadfs    # dashboard (LittleFS) — necessário no
 
 ## Pinos e LEDs
 
-| Placa | LED de Identify | Botão |
+| Placa | LED de status | Botão |
 |---|---|---|
 | DevKit V1 | GPIO 2 (onboard) | GPIO 0 (BOOT) |
 | S3 DevKitC | RGB GPIO 48 | GPIO 0 |
@@ -44,6 +44,6 @@ pio run -e ch-devkit-v1 -t uploadfs    # dashboard (LittleFS) — necessário no
 
 ## Primeiro boot (provisionamento)
 
-1. Conecte no AP **`CriptoHostAP`** (senha `MineYourCoins`).
-2. Portal captive: configure Wi-Fi, pool, wallet.worker.
-3. Acesse `http://<ip>` ou `http://ch-<modelo>-<nn>.local`.
+1. Conecte no AP **`CriptoHostNerdOS-XXXX`** (XXXX = 4 hex únicos da placa; senha `MineYourCoins`).
+2. Portal captive: só a rede Wi-Fi de casa. Pool/wallet já vêm com default.
+3. Acesse `http://<hostname>.local` (o portal mostra o nome; no dashboard, Home → Dashboard URL).

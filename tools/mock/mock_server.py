@@ -21,21 +21,27 @@ def status():
     acc = 241 + up % 50
     rej = 10
     return {
-        "worker": WORKER, "ip": "192.168.1.%d" % (60 + PORT % 10),
+        "worker": WORKER, "hostname": WORKER.lower().replace(".", "-"), "ip": "192.168.1.%d" % (60 + PORT % 10),
+        "mac": "24:6F:28:00:%02X:%02X" % ((PORT // 256) % 256, PORT % 256),
         "hardware": HW, "fw": "v0.1.0-alpha",
         "status": "mining", "hashrate_khs": BASE_KHS + random.uniform(-8, 8),
         "temp_c": 53.0 + random.uniform(-2, 2), "rssi_dbm": -52,
-        "uptime_s": up, "pool": "eu.digi.hmpool.io:3337",
+        "uptime_s": up, "pool": "digi.hmpool.io:3337",
         "shares": {"found": 251, "sent": acc + rej + 1, "accepted": acc, "rejected": rej, "pending": 1},
         "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0,
     }
 
 EVENTS = [
-    {"t": 33700, "type": "accept", "msg": "Share aceito pela pool"},
-    {"t": 33650, "type": "share", "msg": "Share enviado #251"},
-    {"t": 33500, "type": "reject", "msg": "Share rejeitado pela pool"},
+    {"t": 33700, "type": "accept", "msg": "Share accepted by pool"},
+    {"t": 33650, "type": "share", "msg": "Share sent #251"},
+    {"t": 33500, "type": "reject", "msg": "Share rejected — 23 Low difficulty share · miner: share below pool difficulty · diff 0.0012"},
     {"t": 33000, "type": "job", "msg": "Template #2300"},
-    {"t": 30000, "type": "conn", "msg": "Minerando em eu.digi.hmpool.io"},
+    {"t": 30000, "type": "conn", "msg": "Mining on digi.hmpool.io"},
+]
+ERRORS = [
+    {"t": 33500, "type": "reject", "msg": "Share rejected — 23 Low difficulty share · miner: share below pool difficulty · diff 0.0012"},
+    {"t": 28000, "type": "reject", "msg": "Share rejected — 23 Low difficulty share · miner: share below pool difficulty · diff 0.0011"},
+    {"t": 12000, "type": "conn", "msg": "Stratum error — connection timeout"},
 ]
 
 class H(SimpleHTTPRequestHandler):
@@ -61,12 +67,21 @@ class H(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/status": return self._json(status())
         if self.path == "/api/events": return self._json(EVENTS)
+        if self.path == "/api/errors": return self._json(ERRORS)
         if self.path == "/api/config":
-            return self._json({"pool": "eu.digi.hmpool.io", "port": 3337,
+            return self._json({"pool": "digi.hmpool.io", "port": 3337,
                                "wallet": "DAbCdEf123." + WORKER, "password": "x",
                                "timezone": 2, "fw": "v0.1.0-alpha", "hardware": "ESP32 DevKit V1"})
         if self.path == "/api/fleet":
             return self._json({"self": status(), "peers": PEERS})
+        if self.path == "/api/wifi":
+            return self._json({"ssid": "Casa", "rssi": -52, "ip": "192.168.1.66"})
+        if self.path == "/api/wifi/scan":
+            return self._json([
+                {"ssid": "Casa", "rssi": -48, "open": False},
+                {"ssid": "Vizinho", "rssi": -70, "open": False},
+                {"ssid": "Guest", "rssi": -62, "open": True},
+            ])
         if self.path == "/api/bench":
             return self._json({"sw_khs": 78.4, "live_khs": 356.2, "method": "hw"})
         return super().do_GET()

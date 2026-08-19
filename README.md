@@ -33,7 +33,7 @@ Este é um projeto de **hobby, educação e comunidade** (lottery mining). Um ES
 ## Início rápido
 
 1. **Flash**: acesse o web flasher em `nerdos.cripto.host` (Chrome/Edge) ou baixe o `.bin` nas [Releases]().
-2. **Provisionamento**: conecte-se ao AP `CriptoHostAP` e configure Wi-Fi, pool e wallet.
+2. **Provisionamento**: conecte-se ao AP `CriptoHostNerdOS-XXXX` (único por placa) e configure o Wi-Fi.
 3. **Acesse o dashboard**: `http://<ip-do-dispositivo>` (descubra pelo roteador ou mDNS).
 
 Documentação completa em [`/docs`](docs/): [Arquitetura](docs/ARQUITETURA.md) · [API](docs/API.md) · [Pools](docs/POOLS.md) · [Hardware](docs/HARDWARE.md) · [Nó próprio](docs/SOLO-NODE.md)

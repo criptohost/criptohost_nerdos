@@ -68,4 +68,7 @@ bool parse_mining_set_difficulty(String line, double& difficulty);
 
 unsigned long parse_extract_id(const String &line);
 
+// Last Stratum error text after parse_mining_method() (pool reject reason).
+String stratum_last_error_text();
+
 #endif // STRATUM_API_H

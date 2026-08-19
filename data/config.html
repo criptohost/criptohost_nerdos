@@ -27,14 +27,21 @@
       <a href="/ota.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 11V3M4.5 6.5L8 3l3.5 3.5M3 13h10"/></svg>OTA</a>
       <a href="#" id="pool-link" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6.5 9.5l7-7M9 2.5h4.5V7M13 9.5V13a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1h3.5"/></svg>Pool</a>
     </nav>
-    <span class="ch-pill ch-pill--offline" id="statuspill">…</span>
+    <div class="ch-appbar-end">
+      <span class="ch-pill ch-pill--offline" id="statuspill">…</span>
+    </div>
   </header>
 
   <main id="main">
     <div class="ch-card ch-form-shell">
       <div class="ch-metric-label"><span class="hl">Miner</span> Settings</div>
       <h1>Configuration</h1>
-      <p class="ch-muted ch-lede">Change pool and worker without using the captive portal.</p>
+      <p class="ch-muted ch-lede">Pool and Wi-Fi live here after the first setup. Switch networks without going back to the captive portal.</p>
+
+      <div class="ch-tabs ch-tabs--page" role="tablist" aria-label="Settings">
+        <button type="button" class="ch-tab is-on" data-cfg="pool" role="tab" aria-selected="true">Pool</button>
+        <button type="button" class="ch-tab" data-cfg="wifi" role="tab" aria-selected="false">Wi-Fi</button>
+      </div>
 
       <form class="ch-form" id="cfg-form">
         <div class="ch-form-grid">
@@ -42,17 +49,34 @@
             <label for="profile">Pool profile</label>
             <select id="profile">
               <option value="">— custom —</option>
-              <option value="eu.digi.hmpool.io|3337">DigiByte · hmpool (default)</option>
-              <option value="pool.nerdminers.org|3333">Bitcoin · nerdminers.org</option>
-              <option value="pool.nerdminer.io|3333">Bitcoin · nerdminer.io</option>
-              <option value="xec.mining-dutch.nl|9998">eCash · mining-dutch</option>
-              <option value="bch.mining-dutch.nl|9985">Bitcoin Cash · mining-dutch</option>
+              <optgroup label="DigiByte — frequent shares (recommended)">
+                <option value="digi.hmpool.io|3337">DGB · hmpool (default, low-diff)</option>
+                <option value="us1.letsmine.it|3335">DGB · letsmine.it (Brazil / US)</option>
+              </optgroup>
+              <optgroup label="Bitcoin lottery (ESP32 chance ≈ 0)">
+                <option value="pool.nerdminers.org|3333">BTC · nerdminers.org</option>
+                <option value="pool.nerdminer.io|3333">BTC · nerdminer.io</option>
+                <option value="public-pool.io|21496">BTC · public-pool.io</option>
+                <option value="pool.pyblock.xyz|3333">BTC · pyblock.xyz</option>
+                <option value="pool.sethforprivacy.com|3333">BTC · sethforprivacy</option>
+                <option value="pool.solomining.de|3333">BTC · solomining.de</option>
+                <option value="us1.letsmine.it|3332">BTC · letsmine.it</option>
+              </optgroup>
+              <optgroup label="Other SHA-256 (letsmine.it, no signup)">
+                <option value="us1.letsmine.it|3334">BCH · letsmine.it solo</option>
+                <option value="us1.letsmine.it|3333">XEC · letsmine.it solo</option>
+                <option value="us1.letsmine.it|3347">PPC · letsmine.it</option>
+              </optgroup>
+              <optgroup label="Mining Dutch (account required)">
+                <option value="xec.mining-dutch.nl|9998">XEC · mining-dutch</option>
+                <option value="bch.mining-dutch.nl|9985">BCH · mining-dutch</option>
+              </optgroup>
             </select>
           </div>
 
           <div>
             <label for="pool">Pool address</label>
-            <input id="pool" required minlength="4" maxlength="128" placeholder="eu.digi.hmpool.io" autocomplete="off">
+            <input id="pool" required minlength="4" maxlength="128" placeholder="digi.hmpool.io" autocomplete="off">
           </div>
           <div>
             <label for="port">Pool port</label>
@@ -61,14 +85,20 @@
 
           <div class="span-2">
             <label for="wallet">Wallet.worker</label>
-            <input id="wallet" required minlength="8" maxlength="79" placeholder="YOURWALLET.CH-DevKit-01" autocomplete="off">
-            <div class="ch-help">The suffix after the dot identifies this node in Fleet (e.g. <code>CH-DevKit-01</code>).</div>
+            <input id="wallet" required minlength="8" maxlength="79" placeholder="YOURWALLET.CH-A3F2" autocomplete="off">
+            <div class="ch-help">The suffix after the dot is this node’s worker name. Factory default is unique per board (<code>CH-A3F2</code>). The network hostname stays unique even if two wallets share the same suffix.</div>
           </div>
 
           <div class="span-2">
             <label for="password">Pool password / difficulty</label>
             <input id="password" maxlength="79" placeholder="x or d=0.001" autocomplete="off">
-            <div class="ch-help">Optional. Sent exactly as entered during Stratum authorization.</div>
+            <div class="ch-help">Optional. Most pools use <code>x</code>. On vardiff pools try <code>d=0.001</code> so a ~350 kH/s ESP32 can still submit shares.</div>
+          </div>
+
+          <div>
+            <label for="timezone">Timezone (UTC offset)</label>
+            <input id="timezone" type="number" required min="-12" max="12" step="1" placeholder="-3">
+            <div class="ch-help">Whole hours from −12 to +12. Default −3 (Brazil).</div>
           </div>
         </div>
 
@@ -77,6 +107,42 @@
           <a class="ch-btn ch-btn--ghost" href="/">Cancel</a>
         </div>
         <p class="ch-muted" id="cfg-msg"></p>
+      </form>
+
+      <form class="ch-form" id="wifi-form" hidden>
+        <div class="ch-form-grid">
+          <div class="span-2">
+            <label>Current network</label>
+            <div class="ch-help" id="wifi-now">—</div>
+          </div>
+
+          <div class="span-2">
+            <label for="wifi-pick">Nearby networks</label>
+            <div class="ch-wifi-scanrow">
+              <select id="wifi-pick">
+                <option value="">— scan to list networks —</option>
+              </select>
+              <button type="button" class="ch-btn ch-btn--ghost" id="btn-wifi-scan">Scan</button>
+            </div>
+          </div>
+
+          <div class="span-2">
+            <label for="wifi-ssid">SSID</label>
+            <input id="wifi-ssid" required minlength="1" maxlength="32" placeholder="Home network name" autocomplete="off">
+          </div>
+
+          <div class="span-2">
+            <label for="wifi-pass">Wi-Fi password</label>
+            <input id="wifi-pass" type="password" maxlength="63" placeholder="8–63 characters (empty if open)" autocomplete="new-password">
+            <div class="ch-help">The device restarts onto this network. Reopen the Dashboard URL from the Home page (<code>http://&lt;hostname&gt;.local</code>). If it cannot join, look for <code>CriptoHostNerdOS-XXXX</code> (the four hex digits are unique per board; password <code>MineYourCoins</code>).</div>
+          </div>
+        </div>
+
+        <div class="ch-actions">
+          <button type="submit" class="ch-btn">Save Wi-Fi and restart</button>
+          <a class="ch-btn ch-btn--ghost" href="/">Cancel</a>
+        </div>
+        <p class="ch-muted" id="wifi-msg"></p>
       </form>
     </div>
   </main>

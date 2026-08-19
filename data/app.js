@@ -14,14 +14,92 @@
   function statusPill(status) {
     var pill = $("statuspill");
     if (!pill) return;
-    pill.textContent = status === "mining" ? "Mining" : status;
-    pill.className = "ch-pill " + (status === "mining" ? "ch-pill--mining" : "ch-pill--offline");
+    pill.textContent = status === "mining" ? "Mining" : status === "connecting" ? "Connecting" : status;
+    pill.className = "ch-pill " + (status === "mining" || status === "connecting" ? "ch-pill--mining" : "ch-pill--offline");
   }
 
-  // Nav "Pool" → site da pool configurada
-  function poolLink(pool) {
+  function mdnsHost(workerOrSt) {
+    var host = "";
+    if (workerOrSt && typeof workerOrSt === "object")
+      host = workerOrSt.hostname || "";
+    if (!host) {
+      var src = (workerOrSt && typeof workerOrSt === "object") ? workerOrSt.worker : workerOrSt;
+      host = String(src || "criptohost").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    }
+    if (host.length > 31) host = host.slice(0, 31);
+    return (host || "criptohost") + ".local";
+  }
+
+  function miningSymbol(pool) {
+    var parts = String(pool || "").split(":");
+    var host = parts[0].toLowerCase();
+    var port = +(parts[1] || 0);
+    if (host.indexOf("letsmine") >= 0) {
+      if (port === 3335) return "DGB";
+      if (port === 3334 || port === 3434) return "BCH";
+      if (port === 3333 || port === 3433) return "XEC";
+      if (port === 3332 || port === 3432) return "BTC";
+      if (port === 3347) return "PPC";
+    }
+    if (host.indexOf("digi") >= 0 || host.indexOf("hmpool") >= 0) return "DGB";
+    if (host.indexOf("xec") >= 0) return "XEC";
+    if (host.indexOf("bch") >= 0) return "BCH";
+    if (host.indexOf("peercoin") >= 0 || host.indexOf("ppc") >= 0) return "PPC";
+    return "BTC";
+  }
+
+  var miningSym = "DGB";
+
+  // ESP32 DevKit with HW SHA typically peaks ~350–400 kH/s; S3 a bit higher.
+  function hashTargetKhs(hw) {
+    return (hw && /S3/i.test(hw)) ? 500 : 400;
+  }
+
+  var cfgWallet = "";
+
+  function poolDashboardUrl(pool, wallet) {
+    var parts = String(pool || "").split(":");
+    var host = parts[0].toLowerCase();
+    var port = +(parts[1] || 0);
+    var addr = String(wallet || "").split(".")[0];
+    if (!host) return "#";
+    if (host.indexOf("hmpool") >= 0) {
+      var base = host.indexOf("digi") >= 0 ? "https://digi.hmpool.io" : "https://hmpool.io";
+      return addr ? base + "/miner.html?address=" + encodeURIComponent(addr) : base + "/miner.html";
+    }
+    if (host.indexOf("nerdminers.org") >= 0)
+      return addr ? "https://nerdminers.org/?address=" + encodeURIComponent(addr) : "https://nerdminers.org";
+    if (host.indexOf("nerdminer.io") >= 0)
+      return addr ? "https://nerdminer.io/?address=" + encodeURIComponent(addr) : "https://nerdminer.io";
+    if (host.indexOf("public-pool.io") >= 0)
+      return addr ? "https://web.public-pool.io/#/" + encodeURIComponent(addr) : "https://web.public-pool.io";
+    if (host.indexOf("letsmine") >= 0) {
+      var coin = port === 3335 ? "dgb" : port === 3334 || port === 3434 ? "bch"
+        : port === 3333 || port === 3433 ? "xec" : port === 3347 ? "ppc"
+        : port === 3332 || port === 3432 ? "btc" : "";
+      return coin ? "https://www.letsmine.it/coin/" + coin : "https://www.letsmine.it";
+    }
+    if (host.indexOf("pyblock") >= 0) return "https://pool.pyblock.xyz";
+    if (host.indexOf("sethforprivacy") >= 0) return "https://pool.sethforprivacy.com";
+    if (host.indexOf("solomining.de") >= 0) return "https://pool.solomining.de";
+    if (host.indexOf("mining-dutch.nl") >= 0)
+      return "https://www.mining-dutch.nl";
+    return "https://" + host + (addr ? "/?address=" + encodeURIComponent(addr) : "");
+  }
+
+  function poolLink(pool, wallet) {
     var a = $("pool-link");
-    if (a && pool) a.href = "https://" + String(pool).split(":")[0];
+    if (!a || !pool) return;
+    if (wallet != null) cfgWallet = wallet;
+    a.href = poolDashboardUrl(pool, cfgWallet || wallet);
+  }
+
+  function ensurePoolNav(pool) {
+    if (cfgWallet) { poolLink(pool, cfgWallet); return; }
+    fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
+      cfgWallet = c.wallet || "";
+      poolLink(pool || (c.pool + ":" + c.port), cfgWallet);
+    }).catch(function () { if (pool) poolLink(pool, ""); });
   }
 
   function tempClass(t) { return t < 65 ? "temp-ok" : t < 85 ? "temp-warn" : "temp-hot"; }
@@ -29,21 +107,31 @@
   // ---------- HOME ----------
   var tempHist = [];        // sparkline: últimos ~40 pontos (≈3 min)
   var lastAccepted = -1, lastAcceptedAt = null;
+  var lastUptime = 0, lastEvs = [], lastErrs = [], logTab = "all";
 
   function renderStatus(st) {
     statusPill(st.status);
-    poolLink(st.pool);
+    miningSym = miningSymbol(st.pool);
+    highlightMiningChip();
+    ensurePoolNav(st.pool);
+    lastUptime = st.uptime_s || 0;
     set("hashrate", st.hashrate_khs.toFixed(1));
 
-    // anel: 400 kH/s = volta completa (teto DevKit V1 com HW SHA)
+    // Ring fill caps at the target; the % label can exceed 100 when the device outruns it.
+    var target = hashTargetKhs(st.hardware);
+    var ratio = st.hashrate_khs / target;
     var ring = $("ring");
     if (ring) {
-      var C = 452.4, frac = Math.min(1, st.hashrate_khs / 400);
+      var C = 452.4, frac = Math.min(1, ratio);
       ring.style.strokeDashoffset = (C * (1 - frac)).toFixed(1);
+      if (ring.parentElement) ring.parentElement.classList.toggle("is-over", ratio > 1);
     }
-
     var pct = $("ring-pct");
-    if (pct) pct.textContent = Math.round(Math.min(1, st.hashrate_khs / 400) * 100) + "%";
+    if (pct) {
+      pct.textContent = Math.round(ratio * 100) + "%";
+      pct.style.color = ratio > 1 ? "var(--ch-pink)" : "";
+    }
+    set("ring-base", "vs " + target + " kH/s target");
 
     var line = $("status-line");
     if (line) {
@@ -99,19 +187,60 @@
     set("w-pool", st.pool);
     set("w-hw", st.hardware);
     set("w-ip", st.ip);
+    set("w-host", mdnsHost(st));
     set("w-status", st.status);
+    set("w-mac", st.mac || "—");
+    set("wifi-host", mdnsHost(st));
   }
 
-  function renderEvents(evs) {
-    var log = $("log");
-    if (log) log.innerHTML = evs.map(function (e) {
-      return '<div class="' + e.type + '">[' + fmtUptime(e.t) + "] " + e.msg + "</div>";
-    }).join("");
+  function isLogError(e) {
+    if (e.type === "reject") return true;
+    if (e.type === "conn" && /fail|error|lost|timeout/i.test(e.msg)) return true;
+    return false;
+  }
 
-    // stream track: últimos 12 eventos de share como pontos
+  function errKey(e) {
+    return (e.t || 0) + "\0" + (e.type || "") + "\0" + (e.msg || "");
+  }
+
+  function mergeErrsFrom(evs) {
+    var have = {};
+    lastErrs.forEach(function (e) { have[errKey(e)] = true; });
+    (evs || []).filter(isLogError).forEach(function (e) {
+      var k = errKey(e);
+      if (!have[k]) { lastErrs.unshift(e); have[k] = true; }
+    });
+    if (lastErrs.length > 48) lastErrs.length = 48;
+  }
+
+  function fmtWhen(e) {
+    var ago = Math.max(0, lastUptime - (e.t || 0));
+    var d = new Date(Date.now() - ago * 1000);
+    return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
+  function lineHtml(e) {
+    return '<div class="' + e.type + '"><time datetime="">' + fmtWhen(e) + "</time>" + e.msg + "</div>";
+  }
+
+  function paintLogs() {
+    var all = $("log"), err = $("log-err"), n = $("log-err-n");
+    if (all) all.innerHTML = lastEvs.length ? lastEvs.map(lineHtml).join("") : '<div class="empty">No events yet.</div>';
+    if (err) err.innerHTML = lastErrs.length ? lastErrs.map(lineHtml).join("") : '<div class="empty">No errors recorded.</div>';
+    if (n) { n.textContent = lastErrs.length; n.hidden = !lastErrs.length; }
+    if (all) all.hidden = logTab !== "all";
+    if (err) err.hidden = logTab !== "err";
+  }
+
+  function renderEvents(evs, errs) {
+    lastEvs = evs || [];
+    if (Array.isArray(errs)) lastErrs = errs;
+    else mergeErrsFrom(lastEvs);
+    paintLogs();
+
     var track = $("stream-track");
     if (track) {
-      var dots = evs.filter(function (e) { return ["share", "accept", "reject"].indexOf(e.type) >= 0; }).slice(0, 12);
+      var dots = lastEvs.filter(function (e) { return ["share", "accept", "reject"].indexOf(e.type) >= 0; }).slice(0, 12);
       track.innerHTML = dots.map(function (e, i) {
         var left = 6 + (i / Math.max(1, dots.length - 1)) * 88;
         return '<i class="' + e.type + '" style="left:' + left.toFixed(1) + '%;animation-delay:' + (i * 0.2) + 's"></i>';
@@ -126,13 +255,17 @@
   function initHome() {
     function poll() {
       fetch("/api/status").then(function (r) { return r.json(); }).then(renderStatus).catch(function () {});
-      fetch("/api/events").then(function (r) { return r.json(); }).then(renderEvents).catch(function () {});
+      fetch("/api/events").then(function (r) { return r.json(); }).then(function (evs) {
+        return fetch("/api/errors").then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; })
+          .then(function (errs) { renderEvents(evs, errs); });
+      }).catch(function () {});
     }
     try {
       var ws = new WebSocket("ws://" + location.host + "/ws");
       ws.onmessage = function (m) {
         var d = JSON.parse(m.data);
-        if (d.status) { renderStatus(d.status); renderEvents(d.events || []); }
+        if (d.status) { renderStatus(d.status); renderEvents(d.events || [], d.errors); }
         else renderStatus(d);
       };
       ws.onerror = ws.onclose = function () { setInterval(poll, 5000); };
@@ -141,36 +274,80 @@
     marketCard();
     wireActions();
     setInterval(tickLastShare, 1000);
-    // wallet não faz parte do /api/status (contrato congelado) — vem da config
+    document.querySelectorAll(".ch-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        logTab = tab.getAttribute("data-log") || "all";
+        document.querySelectorAll(".ch-tab").forEach(function (t) {
+          var on = t === tab;
+          t.classList.toggle("is-on", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        paintLogs();
+      });
+    });
     fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
+      cfgWallet = c.wallet || "";
       var w = String(c.wallet).split(".")[0];
       set("w-wallet", w.length > 14 ? w.slice(0, 8) + "…" + w.slice(-4) : w);
     }).catch(function () {});
   }
 
   // Preços via CoinGecko direto do browser (poupa heap do ESP32), cache 5 min
+  var MKT_COINS = [
+    { id: "bitcoin", sym: "BTC" },
+    { id: "bitcoin-cash", sym: "BCH" },
+    { id: "peercoin", sym: "PPC" },
+    { id: "digibyte", sym: "DGB" },
+    { id: "ecash", sym: "XEC" }
+  ];
+
+  function fmtUsd(n) {
+    if (n == null) return "—";
+    if (n >= 1000) return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    if (n >= 1) return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (n >= 0.01) return "$" + n.toFixed(4);
+    return "$" + n.toFixed(6);
+  }
+
+  function highlightMiningChip() {
+    var box = $("mkt-chips");
+    if (!box) return;
+    [].forEach.call(box.children, function (el) {
+      var sym = el.getAttribute("data-sym");
+      var on = sym === miningSym;
+      el.classList.toggle("is-mining", on);
+      var tag = el.querySelector(".sym");
+      if (tag) tag.textContent = on ? sym + " · mining" : sym;
+    });
+  }
+
   function marketCard() {
-    var KEY = "ch-market", TTL = 5 * 60 * 1000;
-    function chg(id, v) {
-      var el = $(id);
-      if (!el || v == null) return;
-      el.textContent = (v >= 0 ? "▲ " : "▼ ") + Math.abs(v).toFixed(2) + "%";
-      el.className = "chg " + (v >= 0 ? "up" : "down");
-    }
+    var KEY = "ch-market-v2", TTL = 5 * 60 * 1000;
+    var ids = MKT_COINS.map(function (c) { return c.id; }).join(",");
     function render(d, ts) {
-      set("px-btc", "$" + d.bitcoin.usd.toLocaleString("en-US"));
-      set("px-dgb", "$" + d.digibyte.usd.toFixed(5));
-      set("px-xec", "$" + d.ecash.usd.toFixed(6));
-      chg("chg-btc", d.bitcoin.usd_24h_change);
-      chg("chg-dgb", d.digibyte.usd_24h_change);
-      chg("chg-xec", d.ecash.usd_24h_change);
+      var box = $("mkt-chips");
+      if (!box) return;
+      var rows = MKT_COINS.map(function (c) {
+        var q = d[c.id] || {};
+        return { id: c.id, sym: c.sym, usd: q.usd, chg: q.usd_24h_change };
+      }).filter(function (r) { return r.usd != null; })
+        .sort(function (a, b) { return b.usd - a.usd; });
+      box.innerHTML = rows.map(function (r) {
+        var chg = r.chg == null ? "" : ((r.chg >= 0 ? "▲ " : "▼ ") + Math.abs(r.chg).toFixed(2) + "%");
+        var dir = r.chg == null ? "" : (r.chg >= 0 ? "up" : "down");
+        return '<div class="ch-chip" data-sym="' + r.sym + '">' +
+          '<div class="sym">' + r.sym + "</div>" +
+          '<div class="val">' + fmtUsd(r.usd) + "</div>" +
+          '<div class="chg ' + dir + '">' + chg + "</div></div>";
+      }).join("");
+      highlightMiningChip();
       set("mkt-age", "● market updated " + Math.round((Date.now() - ts) / 60000) + "m ago");
     }
     var c = null;
     try { c = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
     if (c && Date.now() - c.ts < TTL) { render(c.d, c.ts); }
     else {
-      fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,digibyte,ecash&vs_currencies=usd&include_24hr_change=true")
+      fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids + "&vs_currencies=usd&include_24hr_change=true")
         .then(function (r) { return r.json(); })
         .then(function (d) {
           localStorage.setItem(KEY, JSON.stringify({ d: d, ts: Date.now() }));
@@ -182,15 +359,14 @@
   }
 
   function wireActions() {
-    var bi = $("btn-identify"), br = $("btn-restart"), bf = $("btn-factory");
-    if (bi) bi.addEventListener("click", function () { fetch("/api/identify", { method: "POST" }); });
+    var br = $("btn-restart"), bf = $("btn-factory");
     if (br) br.addEventListener("click", function () {
       if (confirm("Restart this device?")) fetch("/api/restart", { method: "POST" });
     });
     if (bf) bf.addEventListener("click", function () {
       // confirmação dupla (M2-08)
       if (!confirm("Factory reset: this erases Wi-Fi and configuration. Continue?")) return;
-      if (!confirm("Are you sure? The device will return to the CriptoHostAP portal.")) return;
+      if (!confirm("Are you sure? The device will return to the CriptoHostNerdOS-XXXX setup network.")) return;
       fetch("/api/factory-reset", { method: "POST" });
     });
   }
@@ -198,7 +374,7 @@
   // ---------- FLEET ----------
   function initFleet() {
     function card(st, ip) {
-      var host = st.worker.toLowerCase().replace(/\./g, "-");
+      var host = st.hostname || String(st.worker || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
       return '<article class="ch-card ch-devcard">' +
         "<h3>" + st.worker +
         ' <span class="' + (st.status === "mining" ? "ch-badge--mining" : "ch-badge--offline") + '" style="font-size:0.72rem;font-weight:700">● ' +
@@ -207,14 +383,14 @@
         '<div class="ip">' + st.ip + "</div>" +
         '<div class="ch-devstrip">' +
         "<div><span>Hashrate</span>" + st.hashrate_khs.toFixed(1) + " kH/s</div>" +
-        '<div><span>Temp</span><span class="' + tempClass(st.temp_c) + '">' + st.temp_c.toFixed(0) + " °C</span></div>" +
+        '<div class="' + tempClass(st.temp_c) + '"><span>Temp</span>' + st.temp_c.toFixed(0) + " °C</div>" +
         "<div><span>Wi-Fi</span>" + st.rssi_dbm + " dBm</div>" +
         "<div><span>Status</span>" + st.status + "</div>" +
         "</div>" +
         '<div class="meta"><span>Pool</span><b>' + st.pool + "</b></div>" +
+        '<div class="meta"><span>MAC</span><b>' + (st.mac || "—") + "</b></div>" +
         '<div class="meta"><span>Version</span><b>' + st.fw + " · " + st.hardware + "</b></div>" +
         '<div class="ch-actions">' +
-        '<button type="button" class="ch-btn ch-btn--ghost" data-act="identify" data-ip="' + ip + '">Identify</button>' +
         '<a class="ch-btn ch-btn--ghost" href="http://' + ip + '/config.html">Config</a>' +
         '<a class="ch-btn ch-btn--ghost" href="http://' + ip + '/ota.html">OTA</a>' +
         '<button type="button" class="ch-btn ch-btn--danger" data-act="restart" data-ip="' + ip + '">Restart</button>' +
@@ -224,7 +400,7 @@
     function refresh() {
       fetch("/api/fleet").then(function (r) { return r.json(); }).then(function (fleet) {
         statusPill(fleet.self.status);
-        poolLink(fleet.self.pool);
+        ensurePoolNav(fleet.self.pool);
         var nodes = [{ st: fleet.self, ip: location.host }];
         var peers = fleet.peers.filter(function (p) { return p.worker !== fleet.self.worker; });
         Promise.all(peers.map(function (p) {
@@ -268,9 +444,34 @@
       $("port").value = c.port;
       $("wallet").value = c.wallet;
       $("password").value = c.password;
-      poolLink(c.pool + ":" + c.port);
+      if ($("timezone")) $("timezone").value = c.timezone;
+      cfgWallet = c.wallet || "";
+      poolLink(c.pool + ":" + c.port, cfgWallet);
     });
-    fetch("/api/status").then(function (r) { return r.json(); }).then(function (st) { statusPill(st.status); }).catch(function () {});
+    var cfgWorker = "", cfgHost = "";
+    fetch("/api/status").then(function (r) { return r.json(); }).then(function (st) {
+      statusPill(st.status);
+      cfgWorker = st.worker || "";
+      cfgHost = st.hostname || "";
+    }).catch(function () {});
+    fetch("/api/wifi").then(function (r) { return r.json(); }).then(function (w) {
+      if ($("wifi-ssid") && w.ssid) $("wifi-ssid").value = w.ssid;
+      var now = w.ssid ? (w.ssid + (w.rssi != null ? " · " + w.rssi + " dBm" : "")) : "not connected";
+      set("wifi-now", now);
+    }).catch(function () {});
+
+    document.querySelectorAll("[data-cfg]").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        var which = tab.getAttribute("data-cfg");
+        document.querySelectorAll("[data-cfg]").forEach(function (t) {
+          var on = t === tab;
+          t.classList.toggle("is-on", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        $("cfg-form").hidden = which !== "pool";
+        $("wifi-form").hidden = which !== "wifi";
+      });
+    });
 
     $("profile").addEventListener("change", function () {
       if (!this.value) return;
@@ -289,11 +490,57 @@
           pool: $("pool").value.trim(),
           port: +$("port").value,
           wallet: $("wallet").value.trim(),
-          password: $("password").value
+          password: $("password").value,
+          timezone: +$("timezone").value
         })
       }).then(function (r) { return r.json(); }).then(function (d) {
         set("cfg-msg", d.ok ? "Saved. Restarting — wait ~20 s and reload." : (d.error || "error"));
       }).catch(function () { set("cfg-msg", "Failed to save."); });
+    });
+
+    $("wifi-pick").addEventListener("change", function () {
+      if (this.value) $("wifi-ssid").value = this.value;
+    });
+
+    $("btn-wifi-scan").addEventListener("click", function () {
+      var btn = $("btn-wifi-scan");
+      btn.disabled = true;
+      set("wifi-msg", "Scanning nearby networks…");
+      fetch("/api/wifi/scan").then(function () {
+        return new Promise(function (resolve) { setTimeout(resolve, 3500); });
+      }).then(function () { return fetch("/api/wifi/scan"); })
+        .then(function (r) { return r.json(); })
+        .then(function (list) {
+          var sel = $("wifi-pick");
+          sel.innerHTML = '<option value="">— pick a network —</option>';
+          (list || []).forEach(function (n) {
+            var opt = document.createElement("option");
+            opt.value = n.ssid;
+            opt.textContent = n.ssid + "  " + n.rssi + " dBm" + (n.open ? "  open" : "");
+            sel.appendChild(opt);
+          });
+          set("wifi-msg", list && list.length ? list.length + " network(s) found." : "No networks found. Type the SSID.");
+        })
+        .catch(function () { set("wifi-msg", "Scan failed. Type the SSID."); })
+        .then(function () { btn.disabled = false; });
+    });
+
+    $("wifi-form").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var ssid = $("wifi-ssid").value.trim();
+      var pass = $("wifi-pass").value;
+      if (!ssid) { set("wifi-msg", "SSID is required."); return; }
+      if (pass.length && pass.length < 8) { set("wifi-msg", "Password must be empty (open) or at least 8 characters."); return; }
+      set("wifi-msg", "Saving Wi-Fi… the dashboard will drop when the radio switches.");
+      fetch("/api/wifi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ssid: ssid, password: pass })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        set("wifi-msg", d.ok
+          ? "Saved. Restarting — join the new network and open http://" + (cfgHost ? cfgHost + ".local" : mdnsHost(cfgWorker || "criptohost"))
+          : (d.error || "error"));
+      }).catch(function () { set("wifi-msg", "Failed to save. If the radio already moved, look for CriptoHostNerdOS-XXXX."); });
     });
   }
 
@@ -302,7 +549,8 @@
     fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
       set("fw-hw", c.hardware);
       set("fw-cur", c.fw);
-      poolLink(c.pool + ":" + c.port);
+      cfgWallet = c.wallet || "";
+      poolLink(c.pool + ":" + c.port, cfgWallet);
     });
     fetch("/api/status").then(function (r) { return r.json(); }).then(function (st) { statusPill(st.status); }).catch(function () {});
 
@@ -327,22 +575,40 @@
       });
     }
 
-    $("ota-form").addEventListener("submit", function (ev) {
-      ev.preventDefault();
-      var f = picked || (file && file.files[0]);
-      if (!f) return;
-      if (!/\.bin$/i.test(f.name)) { set("ota-msg", "Select a .bin file"); return; }
-      $("ota-btn").disabled = true;
-      set("ota-msg", "Uploading… Do not power off the device.");
+    var otaXhr = null;
+    function resetOtaBar() {
+      $("ota-bar").style.width = "0%";
+    }
+    function failOta(msg) {
+      otaXhr = null;
+      $("ota-btn").disabled = false;
+      set("ota-msg", msg);
+    }
+    function sleep(ms) {
+      return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+    function waitOtaReady(tries) {
+      if (tries <= 0) return Promise.resolve(false);
+      return fetch("/api/ota/status").then(function (r) { return r.json(); }).then(function (s) {
+        if (s.error) throw new Error(s.error);
+        if (s.ready) return true;
+        var left = Math.ceil(tries * 0.4);
+        set("ota-msg", "Preparing flash… " + left + "s left. Keep this page open.");
+        return sleep(400).then(function () { return waitOtaReady(tries - 1); });
+      });
+    }
+    function startUpload(f) {
       var fd = new FormData();
       fd.append("firmware", f, f.name);
       var xhr = new XMLHttpRequest();
+      otaXhr = xhr;
       xhr.open("POST", "/api/ota");
+      xhr.timeout = 10 * 60 * 1000;
       xhr.upload.onprogress = function (e) {
         if (e.lengthComputable) {
           var pct = Math.round(e.loaded / e.total * 100);
           $("ota-bar").style.width = pct + "%";
-          set("ota-msg", "Uploading… " + pct + "%");
+          set("ota-msg", "Uploading… " + pct + "% — keep this page open.");
         }
       };
       xhr.onload = function () {
@@ -353,15 +619,50 @@
         } else {
           var msg = "Update failed";
           try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) {}
-          set("ota-msg", msg + " — device remains on the current firmware.");
-          $("ota-btn").disabled = false;
+          resetOtaBar();
+          failOta(msg + " — device stays on the current firmware. You can retry.");
         }
       };
-      xhr.onerror = function () {
-        set("ota-msg", "Connection lost during upload. Try again.");
-        $("ota-btn").disabled = false;
+      xhr.onerror = xhr.ontimeout = xhr.onabort = function () {
+        resetOtaBar();
+        failOta("Connection lost during upload. Mining will resume — wait a few seconds and try again.");
       };
       xhr.send(fd);
+    }
+
+    $("ota-form").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var f = picked || (file && file.files[0]);
+      if (!f) return;
+      if (!/\.bin$/i.test(f.name)) { set("ota-msg", "Select a .bin file"); return; }
+      if (otaXhr) { try { otaXhr.abort(); } catch (e) {} otaXhr = null; }
+      resetOtaBar();
+      $("ota-btn").disabled = true;
+      set("ota-msg", "Pausing miner…");
+      fetch("/api/ota/prepare", { method: "POST" }).then(function (r) {
+        if (r.status === 404) {
+          resetOtaBar();
+          failOta("This firmware cannot OTA while mining. Flash once over USB.");
+          return null;
+        }
+        if (!r.ok) {
+          return r.json().then(function (d) {
+            throw new Error(d.error || "prepare failed");
+          }, function () { throw new Error("prepare failed"); });
+        }
+        return waitOtaReady(40);
+      }).then(function (ready) {
+        if (ready == null) return;
+        if (!ready) {
+          resetOtaBar();
+          failOta("Flash prepare timed out. Erase and USB-flash the factory image once, then OTA works.");
+          return;
+        }
+        startUpload(f);
+      }).catch(function (e) {
+        resetOtaBar();
+        failOta((e && e.message) ? e.message : "Could not start OTA. USB-flash the factory image once.");
+      });
     });
   }
 

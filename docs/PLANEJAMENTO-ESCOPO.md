@@ -15,7 +15,7 @@ O **CriptoHost NerdOS** é um firmware open-source de mineração SHA-256 para E
 O Ha•Kou NerdOS serve **exclusivamente como referência de escopo funcional** (quais telas, quais funcionalidades, qual experiência). Nenhum asset, marca, mascote, texto ou código do Ha•Kou será utilizado. A base de código real é o NerdMiner_v2 (GPL-3.0), e toda a camada visual será construída com a identidade Cripto Host:
 
 - **Tema:** dark com paleta derivada da marca Cripto Host (base #0B041A — roxo profundo do site oficial), tipografia e componentes próprios.
-- **Naming:** dispositivos `CH-<modelo>-<nn>` (ex.: `CH-DevKit-01`), AP de provisionamento `CriptoHostAP`, mDNS `_criptohost._tcp`.
+- **Naming:** dispositivos `CH-<modelo>-<nn>` (ex.: `CH-DevKit-01`), AP de provisionamento `CriptoHostNerdOS`, mDNS `_criptohost._tcp`.
 - **Domínios/canais:** subdomínio sugerido `nerdos.cripto.host` (docs + web flasher), repositório `github.com/criptohost/criptohost-nerdos`.
 
 **Enquadramento honesto (regra de negócio):** projeto de hobby, educação e comunidade (lottery mining + PPLNS). Retorno financeiro esperado ~zero; o valor para a Cripto Host é marca, comunidade e funil educacional para os produtos de node.
@@ -42,11 +42,11 @@ O Ha•Kou NerdOS serve **exclusivamente como referência de escopo funcional** 
 
 1. **Mining core** SHA-256d com acelerador de hardware + midstate caching, Stratum V1 completo.
 2. **Dashboard web** (Home): hashrate ao vivo, shares (found/sent/accepted/rejected/pending), eficiência, best difficulty, uptime, templates, temperatura, RSSI Wi-Fi, preços BTC/DGB/XEC, connection log.
-3. **Fleet**: descoberta mDNS, cards por dispositivo (hashrate, temp, Wi-Fi, pool, versão, status), agregados (devices online, hashrate total, temp média), ações remotas: Identify, Config, Restart, OTA.
+3. **Fleet**: descoberta mDNS, cards por dispositivo (hashrate, temp, Wi-Fi, pool, versão, status), agregados (devices online, hashrate total, temp média), ações remotas: Config, Restart, OTA.
 4. **Configuration**: pool address/port, wallet.worker, password/difficulty (`d=X`), Save & Restart via web.
 5. **OTA Update**: upload de `.bin` via web, config preservada, barra de progresso, proteção contra desconexão.
-6. **Provisionamento**: captive portal (`CriptoHostAP`) no primeiro boot.
-7. **Ações do dispositivo**: Identify (LED/tela), Restart, Factory Reset.
+6. **Provisionamento**: captive portal (`CriptoHostNerdOS`) no primeiro boot.
+7. **Ações do dispositivo**: Restart, Factory Reset.
 8. **Multi-moeda SHA-256d**: DGB (default, hmpool), BTC (pool.nerdminers.org / pool.nerdminer.io), XEC e BCH como perfis opcionais.
 9. **Placas**: Tier 1 — ESP32 DevKit V1 e ESP32-S3 (com e sem display); Tier 2 — C3/C6; Tier 3 — P4+C6 (experimental).
 10. **Identidade visual Cripto Host** em todas as telas, flasher e docs (O7).
@@ -80,7 +80,7 @@ Stratum V2 (Fase 4, opt-in), merged mining (NMC), algoritmos não-SHA256d, app m
 │   │  /            dashboard (LittleFS, tema CH)        │  │
 │   │  /api/status  JSON de telemetria (fleet contract)  │  │
 │   │  /api/config  GET/POST configuração                │  │
-│   │  /api/identify /api/restart /api/factory-reset     │  │
+│   │  /api/restart /api/factory-reset                   │  │
 │   │  /api/ota     upload .bin (Update.h)               │  │
 │   │  /ws          WebSocket push (5 s)                 │  │
 │   └────────────────────────────────────────────────────┘  │
@@ -97,7 +97,7 @@ GET /api/status →
   "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
-  "pool": "eu.digi.hmpool.io:3337",
+  "pool": "digi.hmpool.io:3337",
   "shares": {"found":251,"sent":251,"accepted":241,"rejected":10,"pending":0},
   "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0
 }
@@ -192,7 +192,7 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 | M0-03 | Targets `ch-devkit-v1`, `ch-esp32s3`, `ch-tdisplay-s3` no platformio.ini | chore, ci | 1d | `pio run -e <target>` compila os 3 sem warnings críticos |
 | M0-04 | Migração SPIFFS → LittleFS | chore, area:web | 1d | Config sobrevive a reflash de firmware (partição preservada) |
 | M0-05 | Refatorar estado global para `state/monitor` (single source of truth) | chore, area:mining | 3d | Todas as métricas (shares, hashrate, temp, uptime) lidas de uma struct única thread-safe |
-| M0-06 | Validação de mineração nos 3 targets em `eu.digi.hmpool.io:3337` | test | 2d | 24 h contínuas por target; shares aceitos registrados; zero reboots |
+| M0-06 | Validação de mineração nos 3 targets em `digi.hmpool.io:3337` | test | 2d | 24 h contínuas por target; shares aceitos registrados; zero reboots |
 | M0-07 | BRANDING.md + kit visual Cripto Host (paleta, logo, tipografia) | docs, area:brand | 2d | Paleta com base #0B041A documentada; assets em `/data/brand/`; zero assets de terceiros (O7) |
 | M0-08 | Release automatizada (tag → GitHub Release com `.bin` + changelog) | chore, ci | 1d | `git tag v*` publica release com os 3 binários nomeados |
 
@@ -223,13 +223,13 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 |---|---|---|---|---|
 | M2-01 | Página Fleet: descoberta mDNS + cards de dispositivos | feat, area:fleet | 4d | ≥95% dos nós descobertos em ≤30 s (O3); card com hashrate/temp/Wi-Fi/pool/versão/status |
 | M2-02 | Agregados da frota (online, hashrate total, temp média) | feat, area:fleet | 1d | Valores batem com soma dos `/api/status` individuais |
-| M2-03 | Ações remotas: Identify, Restart, abrir Config/OTA do peer | feat, area:fleet | 2d | Identify pisca LED/tela do nó alvo; Restart confirma com dialog |
+| M2-03 | Ações remotas: Restart, abrir Config/OTA do peer | feat, area:fleet | 2d | Restart confirma com dialog |
 | M2-04 | Página Configuration (pool/port/wallet.worker/senha) + Save & Restart | feat, area:config | 3d | Persistência em NVS; validação de campos; reinício aplica config |
 | M2-05 | Perfis de pool prontos (DGB/BTC/XEC/BCH) selecionáveis | feat, area:config | 2d | Dropdown preenche endpoint/porta; docs/POOLS.md com status de cada pool |
 | M2-06 | OTA via upload `.bin` (Update.h) com barra de progresso | feat, area:ota | 4d | O4: sucesso ≥99% em 50 updates de teste; config preservada; aviso "não desconecte" |
 | M2-07 | Proteção OTA: validação de magic byte/tamanho + retry | feat, area:ota | 2d | Upload de arquivo inválido rejeitado sem brick |
-| M2-08 | Identify local (LED/tela) + Factory Reset com confirmação dupla | feat, area:config | 1d | Factory reset limpa NVS+LittleFS config e volta ao captive portal |
-| M2-09 | Captive portal re-skin `CriptoHostAP` (provisionamento) | feat, area:brand | 2d | Fluxo primeiro-boot completo com identidade CH |
+| M2-08 | Factory Reset com confirmação dupla | feat, area:config | 1d | Factory reset limpa NVS+LittleFS config e volta ao captive portal |
+| M2-09 | Captive portal re-skin `CriptoHostNerdOS` (provisionamento) | feat, area:brand | 2d | Fluxo primeiro-boot completo com identidade CH |
 | M2-10 | Web flasher em `nerdos.cripto.host` (GitHub Pages/ESP Web Tools) | feat, area:ci | 3d | Flash via Chrome/Edge funcional para os 3 targets |
 | M2-11 | Docs completas: ARQUITETURA, API, HARDWARE, POOLS, SOLO-NODE (PT-BR/EN) | docs | 4d | Guia de nó próprio digibyte-ckpool testado end-to-end |
 | M2-12 | Frota piloto: 5+ nós mistos (DevKit+S3) por 7 dias | test | 7d | O3/O4/O5 verificados em ambiente real; issues de campo triadas |

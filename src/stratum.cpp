@@ -44,6 +44,25 @@ bool checkError(const StaticJsonDocument<BUFFER_JSON_DOC> doc) {
   return true;  
 }
 
+String stratum_last_error_text()
+{
+  if (!doc.containsKey("error") || doc["error"].isNull()) {
+    if (doc.containsKey("result") && doc["result"].is<bool>() && doc["result"] == false)
+      return String("result=false");
+    return String("no error field");
+  }
+  JsonVariant e = doc["error"];
+  if (e.is<JsonArray>() && e.size() > 0) {
+    int code = e[0] | 0;
+    const char* msg = e[1] | "";
+    if (msg && msg[0]) return String(code) + " " + msg;
+    return String(code) + " rejected";
+  }
+  if (e.is<const char*>()) return String((const char*)e);
+  String s = e.as<String>();
+  return s.length() ? s : String("rejected");
+}
+
 
 // STEP 1: Pool server connection (SUBSCRIBE)
     // Docs: 
@@ -212,13 +231,13 @@ bool tx_mining_submit(WiFiClient& client, mining_subscribe mWorker, mining_job m
     // Submit
     id = getNextId(id);
     submit_id = id;
-    sprintf(payload, "{\"id\":%u,\"method\":\"mining.submit\",\"params\":[\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"]}\n",
+    sprintf(payload, "{\"id\":%u,\"method\":\"mining.submit\",\"params\":[\"%s\",\"%s\",\"%s\",\"%s\",\"%08lx\"]}\n",
         id,
-        mWorker.wName,//"bc1qvv469gmw4zz6qa4u4dsezvrlmqcqszwyfzhgwj", //mWorker.name,
+        mWorker.wName,
         mJob.job_id.c_str(),
         mWorker.extranonce2.c_str(),
         mJob.ntime.c_str(),
-        String(nonce, HEX).c_str()
+        (unsigned long)nonce
         );
     Serial.print("  Sending  : "); Serial.print(payload);
     client.print(payload);

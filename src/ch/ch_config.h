@@ -5,15 +5,17 @@
 // Marca protegida (ver BRANDING.md). Compile com -D CH_UNBRANDED para fork neutro.
 
 #ifndef CH_VERSION
-#define CH_VERSION "v0.1.0-alpha"
+#define CH_VERSION "v0.1.5-alpha"
 #endif
 
 #ifdef CH_UNBRANDED
 #define CH_PRODUCT_NAME   "NerdOS Miner (unbranded)"
+#define CH_AP_SSID        "NerdOSAP"
 #define CH_WORKER_PREFIX  "NODE-"
 #define CH_MDNS_SERVICE   "nerdosminer"   // _nerdosminer._tcp
 #else
 #define CH_PRODUCT_NAME   "CriptoHost NerdOS"
+#define CH_AP_SSID        "CriptoHostNerdOS"
 #define CH_WORKER_PREFIX  "CH-"
 #define CH_MDNS_SERVICE   "criptohost"    // _criptohost._tcp
 #endif

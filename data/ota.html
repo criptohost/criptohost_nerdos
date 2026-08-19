@@ -27,7 +27,9 @@
       <a href="/ota.html" class="active" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 11V3M4.5 6.5L8 3l3.5 3.5M3 13h10"/></svg>OTA</a>
       <a href="#" id="pool-link" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6.5 9.5l7-7M9 2.5h4.5V7M13 9.5V13a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1h3.5"/></svg>Pool</a>
     </nav>
-    <span class="ch-pill ch-pill--offline" id="statuspill">…</span>
+    <div class="ch-appbar-end">
+      <span class="ch-pill ch-pill--offline" id="statuspill">…</span>
+    </div>
   </header>
 
   <main id="main">
@@ -52,7 +54,7 @@
       </form>
       <div class="ch-gauge" aria-hidden="true"><div id="ota-bar"></div></div>
       <div class="ch-progress-text" id="ota-msg">Waiting for file…</div>
-      <p class="ch-muted">Invalid binaries are rejected before flashing (image signature check) — no brick risk.</p>
+      <p class="ch-muted">The first install of this layout must be USB (erase + firmware + filesystem). After that, OTA writes the other app slot and keeps your config.</p>
     </div>
   </main>
 

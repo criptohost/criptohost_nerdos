@@ -13,6 +13,9 @@
 #include "timeconst.h"
 #include "drivers/displays/display.h"
 #include "drivers/storage/storage.h"
+#ifdef CH_BUILD
+#include "ch/ch_state.h"
+#endif
 #include <mutex>
 #include <list>
 #include <map>
@@ -221,6 +224,27 @@ static uint32_t RandomGet()
 
 #endif
 
+#ifdef CH_BUILD
+static String ch_reject_side(const String& reason)
+{
+  String r = reason;
+  r.toLowerCase();
+  if (r.indexOf("low diffic") >= 0 || r.indexOf("above target") >= 0 || r.indexOf("diff too") >= 0)
+    return "miner: share below pool difficulty";
+  if (r.indexOf("stale") >= 0 || r.indexOf("job not found") >= 0 || r.indexOf("unknown job") >= 0)
+    return "pool: stale job (template already replaced)";
+  if (r.indexOf("duplicate") >= 0)
+    return "miner: duplicate nonce";
+  if (r.indexOf("unauth") >= 0 || r.indexOf("invalid user") >= 0 || r.indexOf("invalid worker") >= 0)
+    return "config: worker/wallet rejected";
+  if (r.indexOf("not subscribed") >= 0 || r.indexOf("not authorized") >= 0)
+    return "stratum: session not ready";
+  if (r.indexOf("ntime") >= 0 || r.indexOf("invalid") >= 0)
+    return "miner: invalid share fields";
+  return "pool reply";
+}
+#endif
+
 void runStratumWorker(void *name) {
 
 // TEST: https://bitcoin.stackexchange.com/questions/22929/full-example-data-for-scrypt-stratum-client
@@ -255,6 +279,7 @@ void runStratumWorker(void *name) {
   uint32_t nonce_pool = 0;
   uint32_t job_pool = 0xFFFFFFFF;
   uint32_t last_job_time = millis();
+  String lastNotifyKey;
 
   while(true) {
       
@@ -277,7 +302,7 @@ void runStratumWorker(void *name) {
 
     if(!isMinerSuscribed)
     {
-      //Stop miner current jobs
+      lastNotifyKey = "";
       mWorker = init_mining_subscribe();
 
       // STEP 1: Pool server connection (SUBSCRIBE)
@@ -342,8 +367,13 @@ void runStratumWorker(void *name) {
       {
           case MINING_NOTIFY:         if(parse_mining_notify(line, mJob))
                                       {
+                                          String notifyKey = mJob.job_id + mJob.ntime;
+                                          if (notifyKey == lastNotifyKey)
+                                            break;
+                                          lastNotifyKey = notifyKey;
                                           {
                                             std::lock_guard<std::mutex> lock(s_job_mutex);
+                                            s_job_result_list.clear();
                                             s_job_request_list_sw.clear();
                                             #ifdef HARDWARE_SHA265
                                             s_job_request_list_hw.clear();
@@ -353,6 +383,7 @@ void runStratumWorker(void *name) {
                                           templates++;
                                           job_pool++;
                                           s_working_current_job_id = job_pool & 0xFF; //Terminate current job in thread
+                                          mMonitor.NerdStatus = NM_hashing;
 
                                           last_job_time = millis();
                                           mLastTXtoPool = last_job_time;
@@ -461,12 +492,26 @@ void runStratumWorker(void *name) {
           case STRATUM_PARSE_ERROR:   {
                                         unsigned long id = parse_extract_id(line);
                                         auto itt = s_submition_map.find(id);
+                                        String why = stratum_last_error_text();
                                         if (itt != s_submition_map.end())
                                         {
                                           ch_shares_rejected++;
-                                          Serial.printf("Refuse submition %d\n", id);
+                                          Serial.printf("Refuse submition %lu (%s)\n", id, why.c_str());
+#ifdef CH_BUILD
+                                          char buf[192];
+                                          snprintf(buf, sizeof(buf),
+                                                   "Share rejected — %s · %s · diff %.4g",
+                                                   why.c_str(),
+                                                   ch_reject_side(why).c_str(),
+                                                   itt->second->diff);
+                                          ch_log_event("reject", String(buf));
+#endif
                                           s_submition_map.erase(itt);
                                         }
+#ifdef CH_BUILD
+                                        else if (why.length() && why != "no error field")
+                                          ch_log_event("conn", "Stratum error — " + why);
+#endif
                                       }
                                       break;
           default:                    Serial.println("  Parsed JSON: unknown"); break;
@@ -501,8 +546,6 @@ void runStratumWorker(void *name) {
         }
       }
       uint32_t time_end = millis();
-      //if (nonces_done > 16384)
-        //Serial.printf("Harvest slaves in %dms hashes=%d\n", time_end - time_start, nonces_done);
       if (time_end > time_start)
       {
         uint32_t elapsed = time_end - time_start;
@@ -511,8 +554,6 @@ void runStratumWorker(void *name) {
       } else
         vTaskDelay(40 / portTICK_PERIOD_MS);
     }
-    #else
-    vTaskDelay(50 / portTICK_PERIOD_MS); //Small delay
     #endif
 
     
@@ -551,7 +592,14 @@ void runStratumWorker(void *name) {
       #endif
     }
 
-    while (!job_result_list.empty())
+    if (client.available()) {
+      for (auto &res : job_result_list) {
+        hashes += res->nonce_count;
+        res->nonce_count = 0;
+      }
+      std::lock_guard<std::mutex> lock(s_job_mutex);
+      s_job_result_list.splice(s_job_result_list.begin(), job_result_list);
+    } else while (!job_result_list.empty())
     {
       std::shared_ptr<JobResult> res = job_result_list.front();
       job_result_list.pop_front();
@@ -586,6 +634,10 @@ void runStratumWorker(void *name) {
           s_submition_map.erase(s_submition_map.begin());
       }
     }
+
+#ifndef I2C_SLAVE
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+#endif
   }
 }
 
@@ -645,6 +697,8 @@ void minerWorkerSw(void * task_id)
           break;
         }
       }
+      __atomic_fetch_add(&hashes, result->nonce_count, __ATOMIC_RELAXED);
+      result->nonce_count = 0;
     } else
       vTaskDelay(2 / portTICK_PERIOD_MS);
 
@@ -893,6 +947,8 @@ void minerWorkerHw(void * task_id)
           break;
         }
       }
+      __atomic_fetch_add(&hashes, result->nonce_count, __ATOMIC_RELAXED);
+      result->nonce_count = 0;
       esp_sha_release_hardware();
     } else
       vTaskDelay(2 / portTICK_PERIOD_MS);
@@ -1121,6 +1177,8 @@ void minerWorkerHw(void * task_id)
           break;
         }
       }
+      __atomic_fetch_add(&hashes, result->nonce_count, __ATOMIC_RELAXED);
+      result->nonce_count = 0;
       esp_sha_unlock_engine(SHA2_256);
     } else
       vTaskDelay(2 / portTICK_PERIOD_MS);
@@ -1282,3 +1340,38 @@ void runMonitor(void *name)
     frame++;
   }
 }
+
+#ifdef CH_BUILD
+static TaskHandle_t s_miner1 = NULL, s_miner2 = NULL, s_stratum = NULL, s_monitor = NULL;
+static bool s_otaPaused = false;
+
+void mining_register_tasks(TaskHandle_t miner1, TaskHandle_t miner2, TaskHandle_t stratum, TaskHandle_t monitor)
+{
+  s_miner1 = miner1;
+  s_miner2 = miner2;
+  s_stratum = stratum;
+  s_monitor = monitor;
+}
+
+void mining_pause_for_ota()
+{
+  if (s_otaPaused) return;
+  s_otaPaused = true;
+  if (s_miner1) { esp_task_wdt_delete(s_miner1); vTaskSuspend(s_miner1); }
+  if (s_miner2) { esp_task_wdt_delete(s_miner2); vTaskSuspend(s_miner2); }
+  if (s_stratum) vTaskSuspend(s_stratum);
+  if (s_monitor) vTaskSuspend(s_monitor);
+  Serial.println("[CH] Mining paused for OTA");
+}
+
+void mining_resume_after_ota()
+{
+  if (!s_otaPaused) return;
+  s_otaPaused = false;
+  if (s_monitor) vTaskResume(s_monitor);
+  if (s_stratum) vTaskResume(s_stratum);
+  if (s_miner1) { vTaskResume(s_miner1); esp_task_wdt_add(s_miner1); }
+  if (s_miner2) { vTaskResume(s_miner2); esp_task_wdt_add(s_miner2); }
+  Serial.println("[CH] Mining resumed after failed OTA");
+}
+#endif

@@ -7,8 +7,8 @@
 
 // default settings
 #ifdef CH_BUILD
-// CH: provisionamento CriptoHostAP + pool DGB low-diff como default (escopo §3.1)
-#define DEFAULT_SSID		"CriptoHostAP"
+// CH: provisionamento CriptoHostNerdOS + pool DGB low-diff como default (escopo §3.1)
+#define DEFAULT_SSID		"CriptoHostNerdOS"
 #elif !defined(HAN)
 #define DEFAULT_SSID		"NerdMinerAP"
 #else
@@ -16,15 +16,24 @@
 #endif
 #define DEFAULT_WIFIPW		"MineYourCoins"
 #ifdef CH_BUILD
-#define DEFAULT_POOLURL		"eu.digi.hmpool.io"
+#define DEFAULT_POOLURL		"digi.hmpool.io"
 #define DEFAULT_POOLPORT	3337
 #else
 #define DEFAULT_POOLURL		"public-pool.io"
 #define DEFAULT_POOLPORT	3333
 #endif
+#ifdef CH_BUILD
+#define DEFAULT_POOLPASS	"X"	/* hmpool exige X maiusculo */
+#else
 #define DEFAULT_POOLPASS	"x"
+#endif
+#ifdef CH_BUILD
+#define DEFAULT_WALLETID	"YOUR_WALLET.CH-01"
+#define DEFAULT_TIMEZONE	-3
+#else
 #define DEFAULT_WALLETID	"yourBtcAddress"
 #define DEFAULT_TIMEZONE	2
+#endif
 #define DEFAULT_SAVESTATS	false
 #define DEFAULT_INVERTCOLORS	false
 #define DEFAULT_BRIGHTNESS	250

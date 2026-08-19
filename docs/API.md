@@ -8,38 +8,47 @@ Base: `http://<ip-do-nó>` · portas: HTTP 80 · CORS liberado nas rotas GET (fl
 
 ```json
 {
-  "worker": "CH-DevKit-01", "ip": "192.168.1.66",
+  "worker": "CH-DevKit-01", "hostname": "ch-devkit-01-a3f2", "ip": "192.168.1.66",
+  "mac": "24:6F:28:A3:F2:B1",
   "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
-  "pool": "eu.digi.hmpool.io:3337",
+  "pool": "digi.hmpool.io:3337",
   "shares": {"found":251,"sent":251,"accepted":241,"rejected":10,"pending":0},
   "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0
 }
 ```
 
-`status`: `mining` | `idle` | `offline`.
+`status`: `mining` | `connecting` | `idle` | `offline`.
 
 ## GET /api/events
 
 Últimos 24 eventos (share stream + connection log): `[{"t":<uptime_s>,"type":"share|accept|reject|job|block|conn","msg":"..."}]`
 
+## GET /api/errors
+
+Ring próprio de rejects e falhas de conexão (até 48), independente do live log de 24 eventos. Mesmo shape de `/api/events`. Idle/checking de rotina **não** entram aqui.
+
 ## GET /api/config · POST /api/config
 
-GET devolve `{pool, port, wallet, password, timezone, fw, hardware}`.
+GET devolve `{pool, port, wallet, password, timezone, hostname, ap_ssid, fw, hardware}`.
 POST aceita o mesmo JSON (campos opcionais), valida (pool 4–128 chars, port 1–65535, wallet 8–79), persiste e **reinicia** (Save & Restart). Respostas: `200 {"ok":true,"restarting":true}` · `400 {"error":...}`.
 
-## POST /api/identify
+## GET /api/wifi · POST /api/wifi · GET /api/wifi/scan
 
-Pisca o LED do nó por 10 s (5 Hz). `200 {"ok":true}`.
+Troca da rede STA sem voltar ao captive portal.
+
+- GET `/api/wifi` → `{"ssid":"<atual>","rssi":-52,"ip":"192.168.1.66"}`.
+- GET `/api/wifi/scan` dispara um scan no `loop()` e devolve o cache (repole em ~3 s) → `[{"ssid","rssi","open"}]`.
+- POST `/api/wifi` `{ssid, password}` (ssid 1–32; password vazio = rede aberta, senão 8–63). Grava na NVS do Wi-Fi e **reinicia**. Se a nova rede falhar, o AP `CriptoHostNerdOS-XXXX` volta (XXXX = 4 hex do MAC).
 
 ## POST /api/restart · POST /api/factory-reset
 
-Restart reinicia mantendo config. Factory reset apaga config + Wi-Fi e volta ao portal `CriptoHostAP` (a UI pede confirmação dupla).
+Restart reinicia mantendo config. Factory reset apaga config + Wi-Fi e volta ao portal `CriptoHostNerdOS-XXXX` (a UI pede confirmação dupla).
 
 ## POST /api/ota
 
-`multipart/form-data` com o `.bin`. Valida magic byte `0xE9` no primeiro chunk (binário inválido → `400`, sem brick). Sucesso → `200` e reboot. Config preservada (partições de app ≠ FS/NVS).
+`multipart/form-data` com o `.bin`. Valida magic byte `0xE9` no primeiro chunk (binário inválido → `400`, sem brick). Sucesso → `200` e reboot. Config preservada (NVS/LittleFS fora das partições de app). Exige tabela com `ota_0` **e** `ota_1` (`partitions/ch_4mb_ota.csv`). Builds antigos em `huge_app.csv` (só `ota_0`) não têm slot OTA — `POST /api/ota/prepare` devolve 400; flash USB factory uma vez.
 
 ## GET /api/fleet
 
@@ -55,8 +64,8 @@ Peers vêm de query mDNS `_criptohost._tcp` (cache; a primeira chamada dispara o
 
 ## WS /ws
 
-Push a cada 5 s: `{"status": {<contrato /api/status>}, "events": [<contrato /api/events>]}`.
+Push a cada 5 s: `{"status": {<contrato /api/status>}, "events": [<contrato /api/events>], "errors": [<contrato /api/errors>]}`.
 
 ## mDNS
 
-Serviço `_criptohost._tcp` porta 80, TXT: `worker`, `fw`, `hardware`. Hostname = worker em minúsculas (`ch-devkit-01.local`).
+Serviço `_criptohost._tcp` porta 80, TXT: `worker`, `fw`, `hardware`. Hostname DHCP/mDNS = worker sanitizado + sufixo MAC (`ch-01-a3f2.local`) para várias placas na mesma LAN.

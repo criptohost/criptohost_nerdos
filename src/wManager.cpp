@@ -16,6 +16,12 @@
 #include "mining.h"
 #include "timeconst.h"
 
+#ifdef CH_BUILD
+#include "ch/ch_config.h"
+#include "ch/ch_captive.h"
+#include "ch/ch_state.h"
+#endif
+
 #include <ArduinoJson.h>
 #include <esp_flash.h>
 
@@ -114,6 +120,9 @@ void configModeCallback(WiFiManager* myWiFiManager)
     drawSetupScreen();
     Serial.print("Config SSID: ");
     Serial.println(myWiFiManager->getConfigPortalSSID());
+#ifdef CH_BUILD
+    Serial.printf("[CH] Join this AP, password \"%s\", then open http://192.168.4.1\n", DEFAULT_WIFIPW);
+#endif
 
     Serial.print("Config IP Address: ");
     Serial.println(WiFi.softAPIP());
@@ -137,9 +146,18 @@ void init_WifiManager()
 #endif //MONITOR_SPEED
     //Serial.setTxTimeoutMs(10);
     
-    // Check for custom AP name from flasher config, otherwise use default
+#ifdef CH_BUILD
+    static char chApSsid[33];
+    {
+      String ap = ch_ap_ssid();
+      strncpy(chApSsid, ap.c_str(), sizeof(chApSsid) - 1);
+      chApSsid[sizeof(chApSsid) - 1] = '\0';
+    }
+    const char* apName = chApSsid;
+#else
     String customAPName = readCustomAPName();
     const char* apName = customAPName.length() > 0 ? customAPName.c_str() : DEFAULT_SSID;
+#endif
 
     //Init pin 15 to eneble 5V external power (LilyGo bug)
 #ifdef PIN_ENABLE5V
@@ -175,6 +193,11 @@ void init_WifiManager()
             forceConfig = true;
         }
     };
+
+#ifdef CH_BUILD
+    if (ch_ensure_unique_identity())
+      nvMem.saveConfig(&Settings);
+#endif
     
     // Free the memory from SDCard class 
     SDCrd.terminate();
@@ -182,8 +205,16 @@ void init_WifiManager()
     // Reset settings (only for development)
     //wm.resetSettings();
 
-    //Set dark theme
-    //wm.setClass("invert"); // dark theme
+#ifdef CH_BUILD
+    {
+      String hn = ch_mdns_hostname();
+      WiFi.setHostname(hn.c_str());
+      wm.setHostname(hn);
+      String apHost = ch_ap_ssid();
+      WiFi.softAPsetHostname(apHost.c_str());
+    }
+    ch_apply_captive_theme(wm);
+#endif
 
     // Set config save notify callback
     wm.setSaveConfigCallback(saveConfigCallback);
@@ -194,8 +225,16 @@ void init_WifiManager()
 
     //Advanced settings
     wm.setConfigPortalBlocking(false); //Hacemos que el portal no bloquee el firmware
+#ifdef CH_BUILD
+    // Wrong home-Wi-Fi password: offer the setup AP until the user saves new credentials.
+    // (Upstream 180 s timeout + restart made the AP vanish before anyone joined.)
+    wm.setConnectTimeout(20);
+    wm.setConfigPortalTimeout(0);
+    wm.setAPClientCheck(true);
+#else
     wm.setConnectTimeout(40); // how long to try to connect for before continuing
     wm.setConfigPortalTimeout(180); // auto close configportal after n seconds
+#endif
     // wm.setCaptivePortalEnable(false); // disable captive portal redirection
     // wm.setAPClientCheck(true); // avoid timeout if client connected to softap
     //wm.setTimeout(120);
@@ -204,7 +243,7 @@ void init_WifiManager()
     // Custom elements
 
     // Text box (String) - 80 characters maximum
-    WiFiManagerParameter pool_text_box("Poolurl", "Pool url", Settings.PoolAddress.c_str(), 80);
+    WiFiManagerParameter pool_text_box("Poolurl", "Pool address", Settings.PoolAddress.c_str(), 80);
 
     // Need to convert numerical input to string to display the default value.
     char convertedValue[6];
@@ -217,14 +256,16 @@ void init_WifiManager()
     //WiFiManagerParameter password_text_box("Poolpassword", "Pool password (Optional)", Settings.PoolPassword, 80);
 
     // Text box (String) - 80 characters maximum
-    WiFiManagerParameter addr_text_box("btcAddress", "Your BTC address", Settings.BtcWallet, 80);
+    WiFiManagerParameter addr_text_box("btcAddress", "Wallet.worker", Settings.BtcWallet, 80);
 
   // Text box (Number) - 2 characters maximum
   char charZone[6];
   sprintf(charZone, "%d", Settings.Timezone);
-  WiFiManagerParameter time_text_box_num("TimeZone", "TimeZone fromUTC (-12/+12)", charZone, 3);
+  WiFiManagerParameter time_text_box_num("TimeZone", "Timezone (UTC offset, -12 to +12)", charZone, 3);
 
-  WiFiManagerParameter features_html("<hr><br><label style=\"font-weight: bold;margin-bottom: 25px;display: inline-block;\">Features</label>");
+#ifndef CH_BUILD
+  WiFiManagerParameter features_html("<hr><label>Features</label>");
+#endif
 
   char checkboxParams[24] = "type=\"checkbox\"";
   if (Settings.saveStats)
@@ -233,9 +274,11 @@ void init_WifiManager()
   }
   WiFiManagerParameter save_stats_to_nvs("SaveStatsToNVS", "Save mining statistics to flash memory.", "T", 2, checkboxParams, WFM_LABEL_AFTER);
   // Text box (String) - 80 characters maximum
-  WiFiManagerParameter password_text_box("Poolpassword - Optional", "Pool password", Settings.PoolPassword, 80);
+  WiFiManagerParameter password_text_box("Poolpassword", "Pool password / difficulty", Settings.PoolPassword, 80);
 
-  // Add all defined parameters
+  // CH: captive portal is Wi-Fi only. Pool/wallet/timezone keep factory defaults
+  // (or values already in flash) and are edited later in the dashboard Config page.
+#ifndef CH_BUILD
   wm.addParameter(&pool_text_box);
   wm.addParameter(&port_text_box_num);
   wm.addParameter(&password_text_box);
@@ -243,6 +286,7 @@ void init_WifiManager()
   wm.addParameter(&time_text_box_num);
   wm.addParameter(&features_html);
   wm.addParameter(&save_stats_to_nvs);
+#endif
   #if defined(ESP32_2432S028R) || defined(ESP32_2432S028_2USB)
   char checkboxParams2[24] = "type=\"checkbox\"";
   if (Settings.invertColors)
@@ -322,7 +366,13 @@ void init_WifiManager()
                 #endif
                 nvMem.saveConfig(&Settings);
                 vTaskDelay(2000 / portTICK_PERIOD_MS);      
-            }        
+            }
+#ifdef CH_BUILD
+            // Exit on the portal (or a timeout on older builds): open the AP again instead of
+            // reboot-looping so a bad home-Wi-Fi password is recoverable without USB.
+            wm.setConfigPortalTimeout(0);
+            wm.startConfigPortal(apName, DEFAULT_WIFIPW);
+#endif
             ESP.restart();                            
         } 
     }

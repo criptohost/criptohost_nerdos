@@ -137,23 +137,27 @@ void setup()
   Serial.println("");
   Serial.println("Initiating tasks...");
   static const char monitor_name[] = "(Monitor)";
+  TaskHandle_t monitorTask = NULL;
   #if defined(CONFIG_IDF_TARGET_ESP32)
   // Increased stack for ESP32 classic due to NVS operations  
-  BaseType_t res1 = xTaskCreatePinnedToCore(runMonitor, "Monitor", 9500, (void*)monitor_name, 5, NULL,1);
+  BaseType_t res1 = xTaskCreatePinnedToCore(runMonitor, "Monitor", 9500, (void*)monitor_name, 5, &monitorTask,1);
   #else
-  BaseType_t res1 = xTaskCreatePinnedToCore(runMonitor, "Monitor", 10000, (void*)monitor_name, 5, NULL,1);
+  BaseType_t res1 = xTaskCreatePinnedToCore(runMonitor, "Monitor", 10000, (void*)monitor_name, 5, &monitorTask,1);
   #endif
 
   /******** CREATE STRATUM TASK *****/
   static const char stratum_name[] = "(Stratum)";
  #if defined(CONFIG_IDF_TARGET_ESP32) && !defined(ESP32_2432S028R) && !defined(ESP32_2432S028_2USB)
   // Reduced stack for ESP32 classic to save memory
-  BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 12000, (void*)stratum_name, 4, NULL,1);
+  TaskHandle_t stratumTask = NULL;
+  BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 12000, (void*)stratum_name, 4, &stratumTask,1);
  #elif defined(ESP32_2432S028R) || defined(ESP32_2432S028_2USB)
   // Free a little bit of the heap to the screen
-  BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 13500, (void*)stratum_name, 4, NULL,1);
+  TaskHandle_t stratumTask = NULL;
+  BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 13500, (void*)stratum_name, 4, &stratumTask,1);
  #else
-  BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 15000, (void*)stratum_name, 4, NULL,1);
+  TaskHandle_t stratumTask = NULL;
+  BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 15000, (void*)stratum_name, 4, &stratumTask,1);
  #endif
 
   /******** CREATE MINER TASKS *****/
@@ -187,6 +191,10 @@ void setup()
   xTaskCreate(minerWorkerSw, "MinerSw-1", 6000, (void*)1, 1, &minerTask2);
   #endif
   esp_task_wdt_add(minerTask2);
+#endif
+
+#ifdef CH_BUILD
+  mining_register_tasks(minerTask1, minerTask2, stratumTask, monitorTask);
 #endif
 
   vTaskPrioritySet(NULL, 4);

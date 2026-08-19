@@ -59,7 +59,7 @@ issue "$M0" "type:chore,area:mining" "M0-05 Estado global em state/monitor (sing
 - [ ] Telas existentes leem apenas do monitor"
 issue "$M0" "type:test" "M0-06 Validação de mineração 24h nos 3 targets (hmpool DGB)" \
 "CA:
-- [ ] 24h contínuas por target em eu.digi.hmpool.io:3337
+- [ ] 24h contínuas por target em digi.hmpool.io:3337
 - [ ] Shares aceitos registrados; zero reboots"
 issue "$M0" "type:docs,area:brand" "M0-07 BRANDING.md + kit visual Cripto Host" \
 "CA:
@@ -118,9 +118,9 @@ issue "$M2" "type:feat,area:fleet" "M2-01 Página Fleet: descoberta + cards" \
 issue "$M2" "type:feat,area:fleet" "M2-02 Agregados da frota (online, total kH/s, temp média)" \
 "CA:
 - [ ] Valores conferem com a soma dos /api/status"
-issue "$M2" "type:feat,area:fleet" "M2-03 Ações remotas: Identify, Restart, Config/OTA do peer" \
+issue "$M2" "type:feat,area:fleet" "M2-03 Ações remotas: Restart, Config/OTA do peer" \
 "CA:
-- [ ] Identify pisca LED/tela do alvo; Restart com confirmação"
+- [ ] Restart com confirmação"
 issue "$M2" "type:feat,area:config" "M2-04 Página Configuration + Save & Restart (NVS)" \
 "CA:
 - [ ] Pool/port/wallet.worker/senha persistidos; validação de campos"
@@ -133,10 +133,10 @@ issue "$M2" "type:feat,area:ota" "M2-06 OTA via upload .bin com progresso" \
 issue "$M2" "type:feat,area:ota" "M2-07 Proteção OTA: validação de binário + retry" \
 "CA:
 - [ ] Arquivo inválido rejeitado sem brick"
-issue "$M2" "type:feat,area:config" "M2-08 Identify local + Factory Reset (confirmação dupla)" \
+issue "$M2" "type:feat,area:config" "M2-08 Factory Reset (confirmação dupla)" \
 "CA:
 - [ ] Reset limpa NVS+config e retorna ao captive portal"
-issue "$M2" "type:feat,area:brand" "M2-09 Captive portal CriptoHostAP (re-skin)" \
+issue "$M2" "type:feat,area:brand" "M2-09 Captive portal CriptoHostNerdOS (re-skin)" \
 "CA:
 - [ ] Fluxo primeiro-boot completo com identidade CH"
 issue "$M2" "type:feat,area:ci" "M2-10 Web flasher em nerdos.cripto.host (ESP Web Tools)" \

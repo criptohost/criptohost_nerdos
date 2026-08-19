@@ -1,6 +1,6 @@
 #ifdef CH_BUILD
 // CriptoHost NerdOS — servidor web local (dashboard + API fleet + OTA)
-// Escopo §4.1: /  /api/status  /api/config  /api/identify  /api/restart
+// Escopo §4.1: /  /api/status  /api/config  /api/restart
 //              /api/factory-reset  /api/ota  /api/fleet  /api/bench  /ws
 #include "ch_web.h"
 #include "ch_config.h"
@@ -10,13 +10,17 @@
 #include <WiFi.h>
 #include <LittleFS.h>
 #include <Update.h>
+#include <esp_ota_ops.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/stream_buffer.h>
 
 #include "../wManager.h"
 #include "../drivers/storage/storage.h"
 #include "../drivers/storage/nvMemory.h"
 #include "../ShaTests/nerdSHA256plus.h"
+#include "../mining.h"
 
 extern TSettings Settings;
 extern nvMemory nvMem;
@@ -24,19 +28,130 @@ extern nvMemory nvMem;
 static AsyncWebServer server(CH_HTTP_PORT);
 static AsyncWebSocket ws("/ws");
 
-static volatile uint32_t s_identifyUntil = 0;   // millis limite do blink
 static volatile bool s_restartPending = false;
 static volatile bool s_fleetRefresh = false;
 static String s_fleetCache = "[]";
-static bool s_otaOk = false;
+static bool s_wifiScan = false;
+static bool s_wifiSavePending = false;
+static String s_wifiScanCache = "[]";
+static String s_wifiNewSsid;
+static String s_wifiNewPass;
+static bool s_otaBusy = false;
+static bool s_otaPrepare = false;
+static volatile bool s_otaReady = false;
+static volatile bool s_otaFail = false;
+static volatile bool s_otaFinishing = false;
+static volatile bool s_otaDone = false;
+static volatile bool s_otaOk = false;
+static uint32_t s_otaLastChunk = 0;
+static StreamBufferHandle_t s_otaStream = nullptr;
+static TaskHandle_t s_otaWriter = nullptr;
+static char s_otaErr[96] = {0};
 
-#ifndef CH_LED_PIN
-#define CH_LED_PIN 2   // LED onboard da maioria dos DevKit; sem efeito se ausente
-#endif
+static void otaSetErr(const char* why)
+{
+  strncpy(s_otaErr, why ? why : "update failed", sizeof(s_otaErr) - 1);
+  s_otaErr[sizeof(s_otaErr) - 1] = '\0';
+}
+
+static void otaCleanupWriter()
+{
+  if (s_otaWriter) {
+    vTaskDelete(s_otaWriter);
+    s_otaWriter = nullptr;
+  }
+  if (s_otaStream) {
+    vStreamBufferDelete(s_otaStream);
+    s_otaStream = nullptr;
+  }
+}
+
+static void otaFailAndResume()
+{
+  otaCleanupWriter();
+  Update.abort();
+  s_otaOk = false;
+  s_otaBusy = false;
+  s_otaReady = false;
+  s_otaPrepare = false;
+  s_otaFail = true;
+  s_otaDone = true;
+  mining_resume_after_ota();
+  WiFi.setSleep(true);
+}
+
+static void otaWriterFail(const char* why)
+{
+  otaSetErr(why);
+  Serial.printf("[CH] OTA failed: %s\n", s_otaErr);
+  Update.abort();
+  if (s_otaStream) {
+    vStreamBufferDelete(s_otaStream);
+    s_otaStream = nullptr;
+  }
+  s_otaOk = false;
+  s_otaReady = false;
+  s_otaBusy = false;
+  s_otaPrepare = false;
+  s_otaFail = true;
+  s_otaDone = true;
+  s_otaWriter = nullptr;
+  mining_resume_after_ota();
+  WiFi.setSleep(true);
+  vTaskDelete(NULL);
+}
+
+static void otaWriterTask(void*)
+{
+  if (!esp_ota_get_next_update_partition(NULL))
+    otaWriterFail("no OTA slot (USB factory flash needed)");
+  if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+    otaWriterFail(Update.errorString());
+  s_otaStream = xStreamBufferCreate(4 * 1024, 1);
+  if (!s_otaStream)
+    otaWriterFail("out of memory");
+  s_otaOk = true;
+  s_otaReady = true;
+  s_otaLastChunk = millis();
+  Serial.println("[CH] OTA ready");
+
+  uint8_t buf[1024];
+  for (;;) {
+    size_t n = xStreamBufferReceive(s_otaStream, buf, sizeof(buf), pdMS_TO_TICKS(200));
+    if (n) {
+      if (Update.write(buf, n) != n)
+        otaWriterFail(Update.errorString());
+    }
+    if (s_otaFinishing && s_otaStream && xStreamBufferBytesAvailable(s_otaStream) == 0) {
+      s_otaOk = !s_otaFail && Update.end(true);
+      if (!s_otaOk) {
+        otaSetErr(Update.errorString());
+        Update.abort();
+      }
+      s_otaDone = true;
+      s_otaWriter = nullptr;
+      vTaskDelete(NULL);
+    }
+  }
+}
 
 static void addCors(AsyncWebServerResponse* r)
 {
   r->addHeader("Access-Control-Allow-Origin", "*"); // fleet: browser consulta peers direto
+}
+
+static String jsonEscape(const String& in)
+{
+  String out;
+  out.reserve(in.length() + 8);
+  for (size_t i = 0; i < in.length(); i++) {
+    char c = in[i];
+    if (c == '"' || c == '\\') { out += '\\'; out += c; }
+    else if (c == '\n') out += "\\n";
+    else if (c == '\r') out += "\\r";
+    else if ((uint8_t)c >= 0x20) out += c;
+  }
+  return out;
 }
 
 static void sendJson(AsyncWebServerRequest* req, const String& body, int code = 200)
@@ -54,6 +169,8 @@ static String configJson()
   j += ",\"wallet\":\"" + String(Settings.BtcWallet) + "\"";
   j += ",\"password\":\"" + String(Settings.PoolPassword) + "\"";
   j += ",\"timezone\":" + String(Settings.Timezone);
+  j += ",\"hostname\":\"" + ch_mdns_hostname() + "\"";
+  j += ",\"ap_ssid\":\"" + ch_ap_ssid() + "\"";
   j += ",\"fw\":\"" CH_VERSION "\",\"hardware\":\"" CH_HARDWARE "\"}";
   return j;
 }
@@ -73,47 +190,71 @@ static void handleConfigPost(AsyncWebServerRequest* req, uint8_t* data, size_t l
       wallet.length() < 8 || wallet.length() >= 80 || pass.length() >= 80) {
     sendJson(req, "{\"error\":\"invalid fields\"}", 400); return;
   }
+  if (doc.containsKey("timezone")) {
+    int tz = doc["timezone"].as<int>();
+    if (tz < -12 || tz > 12) { sendJson(req, "{\"error\":\"invalid timezone\"}", 400); return; }
+    Settings.Timezone = tz;
+  }
 
   Settings.PoolAddress = pool;
   Settings.PoolPort = port;
   strncpy(Settings.BtcWallet, wallet.c_str(), sizeof(Settings.BtcWallet) - 1);
   strncpy(Settings.PoolPassword, pass.c_str(), sizeof(Settings.PoolPassword) - 1);
-  if (doc.containsKey("timezone")) Settings.Timezone = doc["timezone"].as<int>();
   nvMem.saveConfig(&Settings);
   ch_log_event("conn", "Config saved — restarting");
   sendJson(req, "{\"ok\":true,\"restarting\":true}");
   s_restartPending = true; // Save & Restart (M2-04)
 }
 
+static void handleWifiPost(AsyncWebServerRequest* req, uint8_t* data, size_t len)
+{
+  StaticJsonDocument<256> doc;
+  if (deserializeJson(doc, data, len)) { sendJson(req, "{\"error\":\"invalid json\"}", 400); return; }
+  String ssid = doc["ssid"] | "";
+  String pass = doc["password"] | "";
+  ssid.trim();
+  if (ssid.length() < 1 || ssid.length() > 32 || pass.length() > 63 ||
+      (pass.length() > 0 && pass.length() < 8)) {
+    sendJson(req, "{\"error\":\"invalid wifi fields\"}", 400);
+    return;
+  }
+  s_wifiNewSsid = ssid;
+  s_wifiNewPass = pass;
+  s_wifiSavePending = true;
+  ch_log_event("conn", "Wi-Fi saved — restarting");
+  sendJson(req, "{\"ok\":true,\"restarting\":true}");
+  s_restartPending = true;
+}
+
 // ---- /api/ota (M2-06/07) ----
+// Flash writes run on a dedicated task so the async TCP callback only copies
+// bytes. Mining must already be paused (/api/ota/prepare) — SHA on core 0
+// otherwise starves Wi-Fi and iOS drops the POST around 15–25%.
 static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t index,
                             uint8_t* data, size_t len, bool final)
 {
+  (void)req;
   if (index == 0) {
-    s_otaOk = false;
-    if (len < 1 || data[0] != 0xE9) { // magic byte de imagem ESP32 (M2-07)
-      req->send(400, "application/json", "{\"error\":\"invalid binary (magic byte)\"}");
-      return;
-    }
     Serial.printf("[CH] OTA start: %s\n", filename.c_str());
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-      req->send(500, "application/json", "{\"error\":\"no space for OTA\"}");
+    if (!s_otaReady || !s_otaStream) {
+      s_otaFail = true;
       return;
     }
-    s_otaOk = true;
-  }
-  if (s_otaOk && len && Update.write(data, len) != len) {
-    Update.abort();
-    s_otaOk = false;
-  }
-  if (final && s_otaOk) {
-    if (Update.end(true)) {
-      Serial.println("[CH] OTA concluido");
-      ch_log_event("conn", "OTA applied — restarting");
-    } else {
+    if (len < 1 || data[0] != 0xE9) {
+      s_otaFail = true;
       s_otaOk = false;
-      Serial.printf("[CH] OTA erro: %s\n", Update.errorString());
+      return;
     }
+  }
+  s_otaLastChunk = millis();
+  if (s_otaFail || !s_otaStream) return;
+  if (len && xStreamBufferSend(s_otaStream, data, len, pdMS_TO_TICKS(20000)) != len)
+    s_otaFail = true;
+  if (final) {
+    s_otaFinishing = true;
+    uint32_t t0 = millis();
+    while (!s_otaDone && millis() - t0 < 60000)
+      delay(10);
   }
 }
 
@@ -151,6 +292,7 @@ void ch_web_setup()
 
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest* r) { sendJson(r, ch_status_json()); });
   server.on("/api/events", HTTP_GET, [](AsyncWebServerRequest* r) { sendJson(r, ch_events_json()); });
+  server.on("/api/errors", HTTP_GET, [](AsyncWebServerRequest* r) { sendJson(r, ch_errors_json()); });
   server.on("/api/bench",  HTTP_GET, [](AsyncWebServerRequest* r) { sendJson(r, benchJson()); });
 
   server.on("/api/config", HTTP_GET, [](AsyncWebServerRequest* r) { sendJson(r, configJson()); });
@@ -159,11 +301,19 @@ void ch_web_setup()
       if (index + len == total) handleConfigPost(r, data, len); // ponytail: config cabe em 1 chunk (<1.4KB)
     });
 
-  server.on("/api/identify", HTTP_POST, [](AsyncWebServerRequest* r) {
-    s_identifyUntil = millis() + 10000;
-    ch_log_event("conn", "Identify triggered");
-    sendJson(r, "{\"ok\":true}");
+  server.on("/api/wifi", HTTP_GET, [](AsyncWebServerRequest* r) {
+    sendJson(r, String("{\"ssid\":\"") + jsonEscape(WiFi.SSID()) +
+                    "\",\"rssi\":" + String(WiFi.RSSI()) +
+                    ",\"ip\":\"" + WiFi.localIP().toString() + "\"}");
   });
+  server.on("/api/wifi/scan", HTTP_GET, [](AsyncWebServerRequest* r) {
+    s_wifiScan = true;
+    sendJson(r, s_wifiScanCache);
+  });
+  server.on("/api/wifi", HTTP_POST, [](AsyncWebServerRequest*) {}, nullptr,
+    [](AsyncWebServerRequest* r, uint8_t* data, size_t len, size_t index, size_t total) {
+      if (index + len == total) handleWifiPost(r, data, len);
+    });
 
   server.on("/api/restart", HTTP_POST, [](AsyncWebServerRequest* r) {
     sendJson(r, "{\"ok\":true,\"restarting\":true}");
@@ -181,11 +331,54 @@ void ch_web_setup()
     sendJson(r, "{\"self\":" + ch_status_json() + ",\"peers\":" + s_fleetCache + "}");
   });
 
+  server.on("/api/ota/prepare", HTTP_POST, [](AsyncWebServerRequest* r) {
+    if (s_otaBusy) {
+      sendJson(r, "{\"ok\":true}");
+      return;
+    }
+    if (!esp_ota_get_next_update_partition(NULL)) {
+      sendJson(r, "{\"error\":\"this flash layout has no OTA slot — erase and USB-flash the factory image once\"}", 400);
+      return;
+    }
+    s_otaErr[0] = '\0';
+    ws.closeAll();
+    mining_pause_for_ota();
+    WiFi.setSleep(false);
+    s_otaBusy = true;
+    s_otaReady = false;
+    s_otaFail = false;
+    s_otaDone = false;
+    s_otaFinishing = false;
+    s_otaOk = false;
+    s_otaLastChunk = millis();
+    s_otaPrepare = true;
+    sendJson(r, "{\"ok\":true}");
+  });
+  server.on("/api/ota/status", HTTP_GET, [](AsyncWebServerRequest* r) {
+    String j = String("{\"busy\":") + (s_otaBusy ? "true" : "false") +
+               ",\"ready\":" + (s_otaReady ? "true" : "false");
+    if (s_otaErr[0]) {
+      j += ",\"error\":\"";
+      j += jsonEscape(s_otaErr);
+      j += "\"";
+    }
+    j += "}";
+    sendJson(r, j);
+  });
   server.on("/api/ota", HTTP_POST, [](AsyncWebServerRequest* r) {
-    bool ok = s_otaOk && !Update.hasError();
-    r->send(ok ? 200 : 500, "application/json",
-            ok ? "{\"ok\":true,\"restarting\":true}" : "{\"error\":\"update failed\"}");
-    if (ok) s_restartPending = true;
+    bool ok = s_otaOk && s_otaDone && !s_otaFail && !Update.hasError();
+    if (ok) {
+      Serial.println("[CH] OTA concluido");
+      ch_log_event("conn", "OTA applied — restarting");
+      r->send(200, "application/json", "{\"ok\":true,\"restarting\":true}");
+      s_restartPending = true;
+    } else {
+      const char* err = (!s_otaReady) ? "miner was still running — retry"
+                       : (s_otaFail && !s_otaOk) ? "invalid binary or flash write failed"
+                       : "update failed";
+      r->send(400, "application/json", String("{\"error\":\"") + err + "\"}");
+      otaFailAndResume();
+    }
   }, handleOtaUpload);
 
   // CORS preflight p/ fleet cross-origin
@@ -207,8 +400,43 @@ void ch_web_setup()
 
 void ch_web_loop()
 {
-  static uint32_t lastPush = 0, lastBlink = 0;
+  static uint32_t lastPush = 0;
   uint32_t now = millis();
+
+  if (s_otaPrepare) {
+    s_otaPrepare = false;
+    otaCleanupWriter();
+    Update.abort();
+    if (xTaskCreatePinnedToCore(otaWriterTask, "otaW", 6144, nullptr, 6, &s_otaWriter, 1) != pdPASS) {
+      otaSetErr("could not start OTA task");
+      Serial.println("[CH] OTA prepare failed");
+      otaFailAndResume();
+    }
+  }
+
+  if (s_wifiSavePending) {
+    s_wifiSavePending = false;
+    WiFi.persistent(true);
+    if (s_wifiNewPass.length())
+      WiFi.begin(s_wifiNewSsid.c_str(), s_wifiNewPass.c_str());
+    else
+      WiFi.begin(s_wifiNewSsid.c_str());
+    delay(250);
+  }
+
+  if (s_restartPending) {
+    s_restartPending = false;
+    delay(300);
+    ESP.restart();
+  }
+
+  if (s_otaBusy) {
+    if (now - s_otaLastChunk > 120000) {
+      Serial.println("[CH] OTA stalled — resuming mining");
+      otaFailAndResume();
+    }
+    return;
+  }
 
   ch_state_tick();
 
@@ -216,15 +444,9 @@ void ch_web_loop()
     lastPush = now;
     ws.cleanupClients();
     if (ws.count() > 0)
-      ws.textAll("{\"status\":" + ch_status_json() + ",\"events\":" + ch_events_json() + "}");
-  }
-
-  if (s_identifyUntil > now) { // Identify: pisca LED a 5 Hz (M2-03/08)
-    if (now - lastBlink >= 100) {
-      lastBlink = now;
-      pinMode(CH_LED_PIN, OUTPUT);
-      digitalWrite(CH_LED_PIN, !digitalRead(CH_LED_PIN));
-    }
+      ws.textAll("{\"status\":" + ch_status_json() +
+                 ",\"events\":" + ch_events_json() +
+                 ",\"errors\":" + ch_errors_json() + "}");
   }
 
   if (s_fleetRefresh) {
@@ -232,10 +454,24 @@ void ch_web_loop()
     s_fleetCache = ch_fleet_json(); // bloqueia ~3s aqui no loop(), mineração não para (tasks próprias)
   }
 
-  if (s_restartPending) {
-    s_restartPending = false;
-    delay(300); // deixa a resposta HTTP sair
-    ESP.restart();
+  if (s_wifiScan) {
+    s_wifiScan = false;
+    int n = WiFi.scanNetworks(false, false);
+    String j = "[";
+    int cap = n > 20 ? 20 : n;
+    for (int i = 0; i < cap; i++) {
+      if (i) j += ',';
+      j += "{\"ssid\":\"";
+      j += jsonEscape(WiFi.SSID(i));
+      j += "\",\"rssi\":";
+      j += String(WiFi.RSSI(i));
+      j += ",\"open\":";
+      j += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? "true" : "false";
+      j += '}';
+    }
+    j += ']';
+    s_wifiScanCache = j;
+    WiFi.scanDelete();
   }
 }
 #endif // CH_BUILD

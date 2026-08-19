@@ -15,7 +15,7 @@
 │    /            dashboard (LittleFS, tema CH)            │
 │    /api/status  JSON de telemetria (contrato fleet)      │
 │    /api/config  GET/POST configuração (NVS/LittleFS)     │
-│    /api/identify /api/restart /api/factory-reset         │
+│    /api/restart /api/factory-reset                       │
 │    /api/ota     upload .bin (Update.h)                   │
 │    /api/fleet   peers mDNS · /api/bench · /api/events    │
 │    /ws          WebSocket push (5 s)                     │
@@ -31,7 +31,7 @@
 | `mining/sha256_hw` | `src/ShaTests/nerdSHA_HWTest.*` + caminho HW do miner | upstream |
 | `mining/sha256_sw` | `src/ShaTests/nerdSHA256plus.*` (midstate caching) | upstream |
 | `mining/stratum` | `src/stratum.cpp` | upstream (intacto) |
-| `net/wifi_mgr` | `src/wManager.cpp` (WiFiManager, AP `CriptoHostAP`) | upstream + re-skin |
+| `net/wifi_mgr` | `src/wManager.cpp` (WiFiManager, AP `CriptoHostNerdOS`) | upstream + re-skin |
 | `net/mdns_svc` | `src/ch/ch_mdns.cpp` | **novo** |
 | `web/server` + `web/ws_push` + `web/ota` | `src/ch/ch_web.cpp` | **novo** |
 | `state/monitor` | `src/ch/ch_state.cpp` (single source do contrato) | **novo** |

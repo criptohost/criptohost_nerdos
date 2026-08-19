@@ -27,7 +27,7 @@ O código-fonte do CriptoHost NerdOS é software livre sob **GPL-3.0**. A **marc
 1. **Renomear** o produto (nome que não gere confusão com "Cripto Host"/"CriptoHost NerdOS");
 2. **Remover/substituir** logo, paleta oficial aplicada como identidade, tipografia de marca e todo o conteúdo de `/data/brand/`;
 3. **Manter** a licença GPL-3.0, os headers de copyright e a cadeia de atribuição (NerdMiner_v2, HAN, este projeto);
-4. **Não usar** os domínios, AP name (`CriptoHostAP`), service name mDNS (`_criptohost._tcp`) ou prefixo de worker (`CH-`) de forma que induza usuários a acreditar que o fork é oficial.
+4. **Não usar** os domínios, AP name (`CriptoHostNerdOS`), service name mDNS (`_criptohost._tcp`) ou prefixo de worker (`CH-`) de forma que induza usuários a acreditar que o fork é oficial.
 
 > Dica prática: o build aceita `-D CH_UNBRANDED` que compila com tema neutro e strings genéricas, facilitando forks em conformidade.
 

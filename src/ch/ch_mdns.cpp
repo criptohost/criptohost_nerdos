@@ -8,9 +8,7 @@
 
 void ch_mdns_setup()
 {
-  String host = ch_worker_name();
-  host.toLowerCase();
-  host.replace(".", "-");
+  String host = ch_mdns_hostname();
   if (!MDNS.begin(host.c_str())) {
     Serial.println("[CH] mDNS falhou");
     return;
@@ -19,7 +17,7 @@ void ch_mdns_setup()
   MDNS.addServiceTxt(CH_MDNS_SERVICE, "tcp", "worker", ch_worker_name().c_str());
   MDNS.addServiceTxt(CH_MDNS_SERVICE, "tcp", "fw", CH_VERSION);
   MDNS.addServiceTxt(CH_MDNS_SERVICE, "tcp", "hardware", CH_HARDWARE);
-  Serial.printf("[CH] mDNS: %s.local (_%s._tcp)\n", host.c_str(), CH_MDNS_SERVICE);
+  Serial.printf("[CH] mDNS: http://%s.local (_%s._tcp)\n", host.c_str(), CH_MDNS_SERVICE);
 }
 
 String ch_fleet_json()
