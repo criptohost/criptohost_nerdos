@@ -50,9 +50,18 @@
 
   var miningSym = "DGB";
 
-  // ESP32 DevKit with HW SHA typically peaks ~350–400 kH/s; S3 a bit higher.
-  function hashTargetKhs(hw) {
-    return (hw && /S3/i.test(hw)) ? 500 : 400;
+  // Média esperada por placa (escopo O1): DevKit ≥350, S3 ≥300, C3/C6 ≥250 kH/s.
+  // Nó CPU não tem tabela — o alvo é o pico da própria sessão.
+  var sessionPeakKhs = 0;
+  function hashTargetKhs(st) {
+    if (isCpuNode(st)) {
+      sessionPeakKhs = Math.max(sessionPeakKhs, st.hashrate_khs);
+      return sessionPeakKhs || 1;
+    }
+    var hw = st.hardware || "";
+    if (/C3|C6/i.test(hw)) return 250;
+    if (/S3/i.test(hw)) return 300;
+    return 350;
   }
 
   var cfgWallet = "";
@@ -102,6 +111,28 @@
     }).catch(function () { if (pool) poolLink(pool, ""); });
   }
 
+  // Escala automática: contrato fala kH/s; exibição sobe de unidade no milhar
+  function fmtHash(khs) {
+    if (khs >= 1e9) return { v: (khs / 1e9).toFixed(2), u: "TH/s" };
+    if (khs >= 1e6) return { v: (khs / 1e6).toFixed(2), u: "GH/s" };
+    if (khs >= 1e3) return { v: (khs / 1e3).toFixed(2), u: "MH/s" };
+    return { v: khs.toFixed(1), u: "kH/s" };
+  }
+  function fmtHashStr(khs) { var f = fmtHash(khs); return f.v + " " + f.u; }
+
+  function isCpuNode(st) { return st.platform === "cpu" || /-cpu\b/.test(st.fw || ""); }
+
+  // Nó CPU: esconde o que não se aplica (OTA na nav, aba Wi-Fi no Config)
+  var chromeAdapted = false;
+  function adaptPlatform(st) {
+    if (chromeAdapted || !isCpuNode(st)) return;
+    chromeAdapted = true;
+    document.querySelectorAll('.ch-nav-pills a[href="/ota.html"]').forEach(function (a) { a.remove(); });
+    document.querySelectorAll('[data-cfg="wifi"]').forEach(function (t) { t.remove(); });
+    var wifiCard = document.querySelector(".ch-wifi");
+    if (wifiCard) wifiCard.classList.add("is-na");
+  }
+
   function tempClass(t) { return t < 65 ? "temp-ok" : t < 85 ? "temp-warn" : "temp-hot"; }
 
   // ---------- HOME ----------
@@ -115,10 +146,13 @@
     highlightMiningChip();
     ensurePoolNav(st.pool);
     lastUptime = st.uptime_s || 0;
-    set("hashrate", st.hashrate_khs.toFixed(1));
+    adaptPlatform(st);
+    var fh = fmtHash(st.hashrate_khs);
+    set("hashrate", fh.v);
+    set("hashrate-unit", fh.u);
 
     // Ring fill caps at the target; the % label can exceed 100 when the device outruns it.
-    var target = hashTargetKhs(st.hardware);
+    var target = hashTargetKhs(st);
     var ratio = st.hashrate_khs / target;
     var ring = $("ring");
     if (ring) {
@@ -131,7 +165,8 @@
       pct.textContent = Math.round(ratio * 100) + "%";
       pct.style.color = ratio > 1 ? "var(--ch-pink)" : "";
     }
-    set("ring-base", "vs " + target + " kH/s target");
+    set("ring-base", isCpuNode(st) ? "vs session peak (" + fmtHashStr(target) + ")"
+                                    : "vs " + fmtHashStr(target) + " target");
 
     var line = $("status-line");
     if (line) {
@@ -157,14 +192,25 @@
     set("st-accepted", st.shares.accepted);
     set("st-rejected", st.shares.rejected);
 
-    // wi-fi
-    set("rssi", st.rssi_dbm);
-    var q = st.rssi_dbm >= -50 ? 5 : st.rssi_dbm >= -60 ? 4 : st.rssi_dbm >= -67 ? 3 : st.rssi_dbm >= -75 ? 2 : 1;
-    set("wifi-q", ["", "Weak", "Fair", "OK", "Good", "Excellent"][q]);
-    var bars = $("wifibars");
-    if (bars) [].forEach.call(bars.children, function (b, i) { b.className = i < q ? "on" : ""; });
+    // wi-fi (rssi 0 = nó cabeado/CPU: sem rádio a medir)
+    if (!st.rssi_dbm) {
+      set("rssi", "—");
+      set("wifi-q", isCpuNode(st) ? "wired / n/a" : "");
+      var bars0 = $("wifibars");
+      if (bars0) [].forEach.call(bars0.children, function (b) { b.className = ""; });
+    } else {
+      set("rssi", st.rssi_dbm);
+      var q = st.rssi_dbm >= -50 ? 5 : st.rssi_dbm >= -60 ? 4 : st.rssi_dbm >= -67 ? 3 : st.rssi_dbm >= -75 ? 2 : 1;
+      set("wifi-q", ["", "Weak", "Fair", "OK", "Good", "Excellent"][q]);
+      var bars = $("wifibars");
+      if (bars) [].forEach.call(bars.children, function (b, i) { b.className = i < q ? "on" : ""; });
+    }
 
-    // temperatura + sparkline
+    // temperatura + sparkline (0 = sensor não exposto, ex. macOS sem root)
+    if (!st.temp_c) {
+      set("temp", "—");
+      return renderStatusTail(st);
+    }
     set("temp", st.temp_c.toFixed(1));
     tempHist.push(st.temp_c);
     if (tempHist.length > 40) tempHist.shift();
@@ -175,7 +221,10 @@
         return (i / (tempHist.length - 1) * 200).toFixed(1) + "," + (38 - (t - mn) / (mx - mn) * 36).toFixed(1);
       }).join(" "));
     }
+    renderStatusTail(st);
+  }
 
+  function renderStatusTail(st) {
     set("uptime", fmtUptime(st.uptime_s));
     set("bestdiff", st.best_difficulty);
     set("templates", st.templates);
@@ -382,9 +431,10 @@
         '<div class="host">' + host + ".local</div>" +
         '<div class="ip">' + st.ip + "</div>" +
         '<div class="ch-devstrip">' +
-        "<div><span>Hashrate</span>" + st.hashrate_khs.toFixed(1) + " kH/s</div>" +
-        '<div class="' + tempClass(st.temp_c) + '"><span>Temp</span>' + st.temp_c.toFixed(0) + " °C</div>" +
-        "<div><span>Wi-Fi</span>" + st.rssi_dbm + " dBm</div>" +
+        "<div><span>Hashrate</span>" + fmtHashStr(st.hashrate_khs) + "</div>" +
+        (st.temp_c ? '<div class="' + tempClass(st.temp_c) + '"><span>Temp</span>' + st.temp_c.toFixed(0) + " °C</div>"
+                   : "<div><span>Temp</span>—</div>") +
+        "<div><span>Wi-Fi</span>" + (st.rssi_dbm ? st.rssi_dbm + " dBm" : "—") + "</div>" +
         "<div><span>Status</span>" + st.status + "</div>" +
         "</div>" +
         '<div class="meta"><span>Pool</span><b>' + st.pool + "</b></div>" +
@@ -392,7 +442,7 @@
         '<div class="meta"><span>Version</span><b>' + st.fw + " · " + st.hardware + "</b></div>" +
         '<div class="ch-actions">' +
         '<a class="ch-btn ch-btn--ghost" href="http://' + ip + '/config.html">Config</a>' +
-        '<a class="ch-btn ch-btn--ghost" href="http://' + ip + '/ota.html">OTA</a>' +
+        (isCpuNode(st) ? "" : '<a class="ch-btn ch-btn--ghost" href="http://' + ip + '/ota.html">OTA</a>') +
         '<button type="button" class="ch-btn ch-btn--danger" data-act="restart" data-ip="' + ip + '">Restart</button>' +
         "</div></article>";
     }
@@ -400,6 +450,7 @@
     function refresh() {
       fetch("/api/fleet").then(function (r) { return r.json(); }).then(function (fleet) {
         statusPill(fleet.self.status);
+        adaptPlatform(fleet.self);
         ensurePoolNav(fleet.self.pool);
         var nodes = [{ st: fleet.self, ip: location.host }];
         var peers = fleet.peers.filter(function (p) { return p.worker !== fleet.self.worker; });
@@ -412,9 +463,12 @@
           res.filter(Boolean).forEach(function (n) { nodes.push(n); });
           $("fleet-cards").innerHTML = nodes.map(function (n) { return card(n.st, n.ip); }).join("");
           set("agg-online", nodes.length);
-          set("agg-hash", nodes.reduce(function (a, n) { return a + n.st.hashrate_khs; }, 0).toFixed(1));
-          set("agg-temp", nodes.length
-            ? (nodes.reduce(function (a, n) { return a + n.st.temp_c; }, 0) / nodes.length).toFixed(1) : "—");
+          var aggF = fmtHash(nodes.reduce(function (a, n) { return a + n.st.hashrate_khs; }, 0));
+          set("agg-hash", aggF.v);
+          set("agg-hash-unit", aggF.u);
+          var withTemp = nodes.filter(function (n) { return n.st.temp_c > 0; });
+          set("agg-temp", withTemp.length
+            ? (withTemp.reduce(function (a, n) { return a + n.st.temp_c; }, 0) / withTemp.length).toFixed(1) : "—");
           set("scanline", "Scan complete — " + nodes.length + " device(s). Sorted by worker name; new scan every 10 s.");
         });
       }).catch(function () {});
@@ -451,6 +505,7 @@
     var cfgWorker = "", cfgHost = "";
     fetch("/api/status").then(function (r) { return r.json(); }).then(function (st) {
       statusPill(st.status);
+      adaptPlatform(st);
       cfgWorker = st.worker || "";
       cfgHost = st.hostname || "";
     }).catch(function () {});
