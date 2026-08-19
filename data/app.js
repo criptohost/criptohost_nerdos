@@ -406,7 +406,7 @@
         Promise.all(peers.map(function (p) {
           return fetch("http://" + p.ip + ":" + p.port + "/api/status", { signal: AbortSignal.timeout(4000) })
             .then(function (r) { return r.json(); })
-            .then(function (st) { return { st: st, ip: p.ip }; })
+            .then(function (st) { return { st: st, ip: (p.port && p.port != 80) ? p.ip + ":" + p.port : p.ip }; })
             .catch(function () { return null; });
         })).then(function (res) {
           res.filter(Boolean).forEach(function (n) { nodes.push(n); });
@@ -425,7 +425,7 @@
       if (!b) return;
       var act = b.dataset.act, ip = b.dataset.ip;
       if (act === "restart" && !confirm("Restart " + ip + "?")) return;
-      fetch("http://" + ip.replace(/:.*/, "") + "/api/" + act, { method: "POST" }).catch(function () {});
+      fetch("http://" + ip + "/api/" + act, { method: "POST" }).catch(function () {});
     });
     var rescan = $("btn-rescan");
     if (rescan) rescan.addEventListener("click", function () {
