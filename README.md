@@ -77,3 +77,15 @@ Detalhes completos em [`BRANDING.md`](BRANDING.md). Uso comercial da marca somen
 ---
 
 *Feito com 💜 pela comunidade Cripto Host — Small power. Big learning.*
+
+
+## 📸 Screenshots
+
+Interface real, capturada de um **ESP32 DevKit V1 minerando** (CH-8634) na frota de validação — ao lado de um Apple M2, um servidor EPYC e um Android, todos no mesmo Fleet.
+
+| | Desktop | Mobile |
+|---|---|---|
+| **Home** | ![Home](docs/screenshots/esp32-home-desktop.png) | <img src="docs/screenshots/esp32-home-mobile.png" width="260"> |
+| **Fleet** | ![Fleet](docs/screenshots/esp32-fleet-desktop.png) | <img src="docs/screenshots/esp32-fleet-mobile.png" width="260"> |
+| **Config** | ![Config](docs/screenshots/esp32-config-desktop.png) | <img src="docs/screenshots/esp32-config-mobile.png" width="260"> |
+| **OTA** | ![OTA](docs/screenshots/esp32-ota-desktop.png) | <img src="docs/screenshots/esp32-ota-mobile.png" width="260"> |
