@@ -12,25 +12,45 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ch-devkit-v1, ch-esp32s3, ch-tdisplay-s3]
+        include:
+          - target: ch-devkit-v1
+            chip: esp32
+            spiffs: "0x390000"   # partitions/ch_4mb_ota.csv
+          - target: ch-esp32s3
+            chip: esp32s3
+            spiffs: "0x390000"   # partitions/ch_4mb_ota.csv
+          - target: ch-tdisplay-s3
+            chip: esp32s3
+            spiffs: "0x610000"   # partitions/ch_8mb_ota.csv
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install PlatformIO
-        run: pip install platformio
+      - name: Install PlatformIO + esptool
+        run: pip install platformio esptool
       - name: Build firmware + filesystem
         run: |
           pio run -e ${{ matrix.target }}
           pio run -e ${{ matrix.target }} -t buildfs
-      - name: Package
+      - name: Package (full = fábrica+dashboard · ota = só o app)
         run: |
           mkdir -p out
-          cp .pio/build/${{ matrix.target }}/firmware.bin out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}.bin
-          cp .pio/build/${{ matrix.target }}/littlefs.bin out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}-littlefs.bin
+          FACTORY=$(ls firmware/*/${{ matrix.target }}_factory.bin | head -1)
+          esptool.py --chip ${{ matrix.chip }} merge_bin \
+            -o out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}-full.bin \
+            0x0 "$FACTORY" \
+            ${{ matrix.spiffs }} .pio/build/${{ matrix.target }}/littlefs.bin
+          cp .pio/build/${{ matrix.target }}/firmware.bin \
+            out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}-ota.bin
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           files: out/*.bin
           generate_release_notes: true
+          body: |
+            **Como instalar**
+            - Primeira vez (USB/web flasher): grave o `*-full.bin` no offset `0x0` — já inclui bootloader, partições, app e dashboard.
+            - Atualização pela página OTA do dashboard: envie o `*-ota.bin` da sua placa.
+
+            Placas: `ch-devkit-v1` (ESP32 DevKit V1) · `ch-esp32s3` (S3 headless) · `ch-tdisplay-s3` (LilyGO T-Display S3).

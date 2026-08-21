@@ -1,6 +1,6 @@
 # Política de Marca e Identidade Visual — CriptoHost NerdOS
 
-**Titular:** Cripto Host (https://cripto.host) · **Contato:** contato@cripto.host
+**Titular:** Cripto Host (https://cripto.host) · **Contato:** fale@cripto.host
 **Última atualização:** 14/08/2026
 
 ## 1. Princípio: código livre, marca protegida
@@ -37,7 +37,7 @@ O código-fonte do CriptoHost NerdOS é software livre sob **GPL-3.0**. A **marc
 - Uso do logo/identidade em produtos, embalagens ou materiais promocionais;
 - Registro de domínios, perfis ou lojas contendo a marca.
 
-Solicitações: **contato@cripto.host**.
+Solicitações: **fale@cripto.host**.
 
 ## 6. Relação com projetos de terceiros
 

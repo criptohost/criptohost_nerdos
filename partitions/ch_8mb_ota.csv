@@ -1,0 +1,10 @@
+# CriptoHost NerdOS — 8 MB flash com dois slots OTA (T-Display S3 e afins).
+# O build com display (TFT_eSPI/OpenFontRender) passa de 2 MB e não cabe nos
+# slots de 1.75 MB do ch_4mb_ota.csv. Aqui: 3 MB por slot + LittleFS ~1.9 MB.
+# Name,   Type, SubType, Offset,   Size,     Flags
+nvs,      data, nvs,     0x9000,   0x5000,
+otadata,  data, ota,     0xE000,   0x2000,
+app0,     app,  ota_0,   0x10000,  0x300000,
+app1,     app,  ota_1,   0x310000, 0x300000,
+spiffs,   data, spiffs,  0x610000, 0x1E0000,
+coredump, data, coredump,0x7F0000, 0x10000,

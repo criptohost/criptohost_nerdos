@@ -1,87 +1,42 @@
+<div align="center">
+
+<img src="data/brand/icon-192.png" width="90" alt="CriptoHost">
+
 # CriptoHost NerdOS
 
-**Firmware open-source de mineração SHA-256 para ESP32** — telemetria ao vivo, controle de frota, configuração de pool e atualizações OTA, tudo em um só sistema.
+**Transforme um ESP32 de R$ 30 em um minerador SHA-256 de verdade — com dashboard web, frota e OTA.**
 
-Um produto [Cripto Host](https://cripto.host) · *"Node de um jeito fácil"*
+🇧🇷 Português · [🇺🇸 English](README.en.md)
 
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)]() [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)]() [![Firmware](https://img.shields.io/badge/firmware-v0.1.0--alpha-8b5cf6)]()
+[![build](https://github.com/criptohost/criptohost_nerdos/actions/workflows/build.yml/badge.svg)](https://github.com/criptohost/criptohost_nerdos/actions)
+[![release](https://img.shields.io/github/v/release/criptohost/criptohost_nerdos?label=release)](https://github.com/criptohost/criptohost_nerdos/releases)
+[![license](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 
----
+*Um produto [Cripto Host](https://cripto.host) — "Miner de um jeito fácil"*
 
-## ⚠️ Aviso honesto
-
-Este é um projeto de **hobby, educação e comunidade** (lottery mining). Um ESP32 a ~300 kH/s tem probabilidade estatisticamente desprezível de encontrar um bloco. O valor está em aprender Stratum, SHA-256d, dificuldade e sistemas embarcados — não em retorno financeiro.
-
-## Funcionalidades
-
-- ⛏ **Mining core** SHA-256d com acelerador de hardware + midstate caching (Stratum V1)
-- 📊 **Dashboard web** local: hashrate, shares, eficiência, temperatura, Wi-Fi, preços de mercado
-- 🛰 **Fleet**: descoberta automática (mDNS) e gestão de todos os nós da sua rede
-- ⚙️ **Configuração via web**: pool, worker e wallet sem recompilar
-- 📦 **OTA**: atualize o firmware pelo navegador, sem cabo USB
-- 🪙 **Multi-moeda SHA-256d**: DigiByte (default), Bitcoin, eCash e Bitcoin Cash
-
-## Hardware suportado
-
-| Tier | Placa | Hashrate alvo |
-|---|---|---|
-| 1 | ESP32 DevKit V1 (recomendado) | ≥350 kH/s |
-| 1 | ESP32-S3 (headless ou T-Display S3) | ≥300 kH/s |
-| 2 | ESP32-C3 / C6 *(em desenvolvimento)* | ≥250 kH/s |
-| 3 | ESP32-C5 / P4+C6 *(experimental)* | — |
-
-## Início rápido
-
-1. **Flash**: acesse o web flasher em `nerdos.cripto.host` (Chrome/Edge) ou baixe o `.bin` nas [Releases]().
-2. **Provisionamento**: conecte-se ao AP `CriptoHostNerdOS-XXXX` (único por placa) e configure o Wi-Fi.
-3. **Acesse o dashboard**: `http://<ip-do-dispositivo>` (descubra pelo roteador ou mDNS).
-
-Documentação completa em [`/docs`](docs/): [Arquitetura](docs/ARQUITETURA.md) · [API](docs/API.md) · [Pools](docs/POOLS.md) · [Hardware](docs/HARDWARE.md) · [Nó próprio](docs/SOLO-NODE.md)
-
-## Compilando do código
-
-```bash
-git clone https://github.com/criptohost/criptohost-nerdos
-cd criptohost-nerdos
-pio run -e ch-devkit-v1        # ou ch-esp32s3 / ch-tdisplay-s3
-pio run -e ch-devkit-v1 -t upload
-```
+</div>
 
 ---
 
-## 📜 Licença e marca — leia antes de forkar
+## 🧭 O que é isso?
 
-Este projeto separa explicitamente **código** e **marca**:
+O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ESP32. Ele conecta a placa numa pool real, minera SHA-256d de verdade e entrega tudo num **dashboard web local** — sem app, sem nuvem, sem cadastro.
 
-### Código: GPL-3.0 (livre)
+> ⚠️ **Enquadramento honesto**: isto é um projeto de **hobby e educação**. Um ESP32 faz ~350 kH/s; um ASIC faz 200 TH/s — 500 milhões de vezes mais. Você não vai enriquecer: vai **aprender** como Stratum, dificuldade, shares e blocos funcionam, vendo tudo acontecer ao vivo. O retorno esperado é ~zero, e dizemos isso com orgulho.
 
-Todo o código-fonte deste repositório é licenciado sob **[GPL-3.0](LICENSE)**, como trabalho derivado do [NerdMiner_v2](https://github.com/BitMaker-hub/NerdMiner_v2). Você pode usar, estudar, modificar e redistribuir o código, inclusive comercialmente, desde que mantenha a mesma licença e o código aberto.
+## ✨ O que ele faz
 
-### Marca: Cripto Host (protegida — todos os direitos reservados)
+- ⛏️ **Minera de verdade** — SHA-256d com acelerador de hardware do ESP32 + midstate caching, Stratum V1 completo
+- 📊 **Dashboard ao vivo** — hashrate com anel de progresso, shares, eficiência, best difficulty, temperatura, Wi-Fi, preços de mercado, log de conexão
+- 🕸️ **Fleet peer-to-peer** — cada nó descobre os vizinhos via mDNS; qualquer placa mostra a frota inteira, sem servidor central
+- 🔄 **OTA pelo navegador** — atualize o firmware sem cabo USB, com dois slots (A/B) e configuração preservada
+- 📱 **Vira app no celular** — PWA: "Adicionar à Tela de Início" no iPhone/Android
+- 🌐 **Provisionamento fácil** — primeiro boot abre o portal Wi-Fi `CriptoHostAP`
+- 🪙 **Multi-moeda SHA-256d** — DigiByte (default, shares frequentes), BTC, BCH, XEC, PPC
 
-O nome **"Cripto Host"**, o nome do produto **"CriptoHost NerdOS"**, o logotipo, a identidade visual, o design system e demais assets de marca (arquivos em `/data/brand/`) **não são cobertos pela GPL** e permanecem propriedade exclusiva da Cripto Host. A GPL-3.0 (seção 7e) permite expressamente essa reserva de direitos de marca em trabalhos derivados.
+## 🖼️ Telas
 
-**Se você forkar este projeto, deve:**
-1. **Remover** o nome, logo e assets visuais da Cripto Host do seu fork;
-2. **Renomear** o produto (não use "CriptoHost", "Cripto Host" ou variações confundíveis);
-3. **Manter** a licença GPL-3.0, os avisos de copyright e a atribuição ao código original.
-
-Detalhes completos em [`BRANDING.md`](BRANDING.md). Uso comercial da marca somente com autorização por escrito: **contato@cripto.host**.
-
-### Atribuições
-
-- **Upstream**: [NerdMiner_v2](https://github.com/BitMaker-hub/NerdMiner_v2) (BitMaker e comunidade) e [HAN](https://github.com/valerio-vaccaro/HAN) (valerio-vaccaro) — GPL-3.0.
-- **Referências técnicas** (aceleração SHA por hardware, arquitetura de fleet): SparkMiner, BitMiner24 Firmware, NerdOS/AxeOS — todos GPL.
-- Este projeto **não** utiliza código, assets ou marca de nenhum outro produto de mineração; semelhanças funcionais refletem o escopo comum da categoria "home mining ESP32".
-
----
-
-*Feito com 💜 pela comunidade Cripto Host — Small power. Big learning.*
-
-
-## 📸 Screenshots
-
-Interface real, capturada de um **ESP32 DevKit V1 minerando** (CH-8634) na frota de validação — ao lado de um Apple M2, um servidor EPYC e um Android, todos no mesmo Fleet.
+Capturas reais de um ESP32 DevKit V1 minerando (frota de validação: placas + Mac + servidor + Android no mesmo Fleet).
 
 | | Desktop | Mobile |
 |---|---|---|
@@ -89,3 +44,93 @@ Interface real, capturada de um **ESP32 DevKit V1 minerando** (CH-8634) na frota
 | **Fleet** | ![Fleet](docs/screenshots/esp32-fleet-desktop.png) | <img src="docs/screenshots/esp32-fleet-mobile.png" width="260"> |
 | **Config** | ![Config](docs/screenshots/esp32-config-desktop.png) | <img src="docs/screenshots/esp32-config-mobile.png" width="260"> |
 | **OTA** | ![OTA](docs/screenshots/esp32-ota-desktop.png) | <img src="docs/screenshots/esp32-ota-mobile.png" width="260"> |
+
+## 🚀 Comece em 10 minutos
+
+**Você vai precisar de:** uma placa ESP32 (DevKit V1 ~R$ 30, ESP32-S3 ou LilyGO T-Display S3), cabo USB e uma carteira da moeda que quer minerar (DigiByte recomendado).
+
+1. **Baixe o firmware** da sua placa na [página de Releases](https://github.com/criptohost/criptohost_nerdos/releases) — pegue o arquivo `*-full.bin` (já vem com bootloader, app e dashboard).
+2. **Grave na placa** no offset `0x0` (esptool, ESP Flash Tool ou o web flasher):
+   ```bash
+   pip install esptool
+   esptool.py write_flash 0x0 criptohost-nerdos-vX.Y.Z-ch-devkit-v1-full.bin
+   ```
+3. **Conecte no Wi-Fi da placa** — rede `CriptoHostAP` (senha `MineYourCoins`) — e siga o portal: escolha sua rede, informe `carteira.worker`.
+4. **Abra o dashboard** — `http://ch-XXXX.local` (o nome aparece no portal) ou o IP da placa. Em ~30 segundos os primeiros shares aceitos aparecem no log. 🎉
+5. **(Opcional)** No celular: Safari/Chrome → Compartilhar → **Adicionar à Tela de Início** — vira um app.
+
+> 💡 Atualizações futuras: pela própria página **OTA** do dashboard, com o arquivo `*-ota.bin` — sem cabo.
+
+## 🕸️ A frota (e os irmãos do ecossistema)
+
+Todo nó CriptoHost fala o mesmo contrato: anuncia `_criptohost._tcp` via mDNS e responde `GET /api/status`. Resultado: **placas, PCs, servidores e celulares aparecem no mesmo Fleet**, cada um com seu card, agregados e ações remotas (Home, Config, Restart).
+
+| Repositório | O que minera | Hashrate típico |
+|---|---|---|
+| **criptohost_nerdos** (este) | ESP32 (DevKit V1, S3, T-Display) | ~350 kH/s |
+| [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux e macOS (CPU) | 20–165 MH/s |
+| [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = painel) | ~47 MH/s |
+
+## 🔌 API
+
+Cada nó expõe uma API HTTP local (a mesma que o dashboard usa):
+
+```bash
+curl http://ch-XXXX.local/api/status
+```
+
+```json
+{
+  "worker": "CH-8634", "hardware": "ESP32 DevKit V1", "status": "mining",
+  "hashrate_khs": 381.0, "temp_c": 47.0, "rssi_dbm": -35,
+  "shares": {"found": 251, "sent": 251, "accepted": 241, "rejected": 10, "pending": 0},
+  "best_difficulty": 7.16, "valid_blocks": 0
+}
+```
+
+Rotas: `/api/status` · `/api/config` · `/api/fleet` · `/api/events` · `/api/identify` · `/api/restart` · `/api/ota`. Documentação completa em [docs/API.md](docs/API.md). **Este contrato é congelado** — é ele que faz gerações e plataformas diferentes conviverem na mesma frota.
+
+## ⛏️ Pools e moedas
+
+O default é **DigiByte na hmpool** (`digi.hmpool.io:3337`, password `X`): dificuldade baixa = shares aceitos com frequência = feedback constante para aprender. Perfis prontos no Config para BTC (lottery), BCH, XEC e PPC — detalhes e status de cada pool em [docs/POOLS.md](docs/POOLS.md). Quer independência total? Monte seu próprio nó+pool: [docs/SOLO-NODE.md](docs/SOLO-NODE.md).
+
+## ❓ Perguntas honestas
+
+**Vou ganhar dinheiro?** Não. Em DGB você acumula frações de centavo; em BTC a chance de bloco é ~1 em milhões de anos. O produto é o aprendizado (e o card de shares aceitos no seu dashboard).
+
+**Quanto gasta de energia?** ~1–2 W por placa — menos que um LED. Pode deixar ligado sem culpa.
+
+**Esquenta?** 45–60 °C minerando, normal para o chip. O dashboard mostra a temperatura ao vivo.
+
+**Preciso de conta em algum lugar?** Só uma carteira da moeda (a pool default não exige cadastro). Nada de nuvem ou telemetria nossa.
+
+## 🧑‍💻 Para desenvolvedores
+
+```bash
+git clone https://github.com/criptohost/criptohost_nerdos && cd criptohost_nerdos
+pip install platformio
+pio run -e ch-devkit-v1              # compila (targets: ch-devkit-v1, ch-esp32s3, ch-tdisplay-s3)
+pio run -e ch-devkit-v1 -t upload    # grava app via USB
+pio run -e ch-devkit-v1 -t uploadfs  # grava dashboard (LittleFS)
+python3 tools/mock/mock_server.py    # dashboard no navegador sem placa (http://localhost:8091)
+```
+
+Arquitetura, mapa de código e decisões: [docs/ARQUITETURA.md](docs/ARQUITETURA.md) · Roadmap e milestones: [docs/PLANEJAMENTO-ESCOPO.md](docs/PLANEJAMENTO-ESCOPO.md) · Como contribuir: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 📜 Licença, marca e créditos
+
+- **Código**: [GPL-3.0](LICENSE), herdada do upstream [NerdMiner_v2](https://github.com/BitMaker-hub/NerdMiner_v2) (BitMaker e comunidade) — todo o crédito do core de mineração a eles.
+- **Marca**: código livre, marca protegida — nome, logo e identidade Cripto Host seguem o [BRANDING.md](BRANDING.md). Forke à vontade; remova a marca (`-D CH_UNBRANDED` ajuda).
+- Inspirações da categoria: HAN, SparkMiner, BitMiner24.
+
+## 💬 Contato
+
+Dúvidas, ideias ou parceria: **fale@cripto.host** · Issues e PRs são bem-vindos.
+
+---
+
+<div align="center">
+
+*Small power. Big learning.* 💜
+
+</div>
