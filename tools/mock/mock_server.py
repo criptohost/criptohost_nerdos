@@ -73,7 +73,18 @@ class H(SimpleHTTPRequestHandler):
                                "wallet": "DAbCdEf123." + WORKER, "password": "x",
                                "timezone": 2, "fw": "v0.1.0-alpha", "hardware": "ESP32 DevKit V1"})
         if self.path == "/api/fleet":
-            return self._json({"self": status(), "peers": PEERS})
+            return self._json({"self": status(), "peers": PEERS, "foreign": [{
+                "worker": "bitaxe-supra", "hostname": "bitaxe", "ip": "192.168.1.90",
+                "port": 80, "platform": "foreign", "vendor": "Bitaxe/AxeOS",
+                "hardware": "BM1368", "fw": "v2.4.1",
+                "status": "mining", "hashrate_khs": 625000000.0, "temp_c": 58.4,
+                "rssi_dbm": -48, "uptime_s": 91234, "pool": "public-pool.io:21496",
+                "mac": "5C:01:3B:AA:12:34", "coin": "BTC",
+                "shares": {"found": 3421, "sent": 3421, "accepted": 3401,
+                           "rejected": 20, "pending": 0},
+                "best_difficulty": "4.29M", "templates": 0, "valid_blocks": 0}]})
+        if self.path == "/api/peers":
+            return self._json({"content": "192.168.1.205        # CH-8634\n192.168.1.62:8091    # mac\n", "editable": True})
         if self.path == "/api/wifi":
             return self._json({"ssid": "Casa", "rssi": -52, "ip": "192.168.1.66"})
         if self.path == "/api/wifi/scan":
