@@ -9,6 +9,7 @@ Profiles in the Config dropdown (verified 2026-08):
 | Coin | Pool | Endpoint | Model | Notes |
 |---|---|---|---|---|
 | DGB (default) | hmpool | `digi.hmpool.io:3337` | PPLNS low-diff | US region; best feedback on ESP32 |
+| DGB | FusionPool | `dgb.fusionpool.pro:3333` | Híbrida 70/25/5 (taxa 2%) | BR; sem cadastro; porta 3333 = micro miners (20 kH/s–99 GH/s, vardiff 0.001+); 3334 Bitaxe · 3335/3336 ASICs; achador leva 70%, 25% dividido por shares×peso (10%/dia até 100%), 5% jackpot |
 | DGB | letsmine.it | `us1.letsmine.it:3335` | solo, no signup | Brazil/US region; vardiff — try password `d=0.001` |
 | BTC | nerdminers.org | `pool.nerdminers.org:3333` | lottery | NerdMiner-class |
 | BTC | nerdminer.io | `pool.nerdminer.io:3333` | lottery | NerdMiner-class |
