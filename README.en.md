@@ -34,7 +34,7 @@ CriptoHost NerdOS is an **open-source mining firmware** for ESP32 boards. It con
 - 🛰️ **Network orbit** — a live fleet map on the Fleet page: your nodes connected in rings around the current one
 - 🔭 **Sees third-party miners** — Bitaxe, NerdQAxe/NerdOctaxe (AxeOS family) on the same network show up as amber cards with hashrate, temperature, pool, MAC and version (discovery done by CPU/CH Agent nodes)
 - 🌐 **Easy onboarding** — first boot opens the `CriptoHostAP` Wi-Fi portal
-- 🪙 **Multi-coin SHA-256d** — DigiByte (default, frequent shares), BTC, BCH, XEC, PPC
+- 🪙 **Multi-coin SHA-256d** — DigiByte (default, frequent shares), BTC, BCH, XEC, PPC, BC2, BCH2 — plus free Namecoin + Fractal Bitcoin via merged mining on BCMonster
 
 ## 🖼️ Screens
 

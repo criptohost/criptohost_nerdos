@@ -9,6 +9,7 @@ Profiles in the Config dropdown (verified 2026-08):
 | Coin | Pool | Endpoint | Model | Notes |
 |---|---|---|---|---|
 | DGB (default) | hmpool | `digi.hmpool.io:3337` | PPLNS low-diff | US region; best feedback on ESP32 |
+| DGB/BTC/BCH/PPC/BC2/BCH2 | BCMonster | `bcmonster.com` portas lottery: DGB `9996` · BTC `9999` (+NMC/FB merged grátis) · BCH `9994` · PPC `9995` · BC2 `9997` · BCH2 `9998` | PROP 1.5% (ou solo com senha `m=solo`) | Sem cadastro; diff 0.001 alvo 1 share/10s; dashboard `bcmonster.com/worker.html?address=WALLET`; estreia BC2/BCH2/NMC/FB no ecossistema. Validada ao vivo (share aceito em 1.1s) |
 | DGB | FusionPool | `dgb.fusionpool.pro:3333` | Híbrida 70/25/5 (taxa 2%) | BR; sem cadastro; porta 3333 = micro miners (20 kH/s–99 GH/s, vardiff 0.001+); 3334 Bitaxe · 3335/3336 ASICs; achador leva 70%, 25% dividido por shares×peso (10%/dia até 100%), 5% jackpot |
 | DGB | letsmine.it | `us1.letsmine.it:3335` | solo, no signup | Brazil/US region; vardiff — try password `d=0.001` |
 | BTC | nerdminers.org | `pool.nerdminers.org:3333` | lottery | NerdMiner-class |
@@ -44,3 +45,18 @@ Um ESP32 (~350 kH/s) em lottery mining de BTC/BCH tem chance ~zero de bloco. Par
 ## Nó próprio
 
 Quer independência de pools de terceiros? Guia completo em [SOLO-NODE.md](SOLO-NODE.md) (digibyte-ckpool em Docker).
+
+
+## Avaliadas e descartadas (com o motivo medido)
+
+Para ninguém perder tempo redescobrindo — probe Stratum feito em 24/08/2026:
+
+| Pool | Motivo |
+|---|---|
+| SoloFury (BTC/BCH/BC2/BCH2/XEC) | piso de vardiff **100.000** — ESP32 levaria ~34 anos por share; só ASIC |
+| Kryptex solo (BCH `bch.kryptex.network:7015`) | aceita wallet sem conta, mas piso **524.288** — só ASIC |
+| unMineable (sha256) | autoriza `COIN:wallet`, mas diff **fixa em 16.384** (2 min sem vardiff cair) — inviável até para CPU; confirma o relato da comunidade de que subiram o piso |
+| zpool (sha256) | piso **65.536** — só ASIC |
+| solopool.org (dgb-sha) | stratum sem resposta + relato "hashrate 0" na comunidade NerdMiner |
+| molepool (XEC) | stratum sem resposta |
+| blockminerz · bchsolo · vkbit · zergpool · zSolo | DNS não resolve — extintas (ainda circulam em listas antigas) |
