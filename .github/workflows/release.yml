@@ -36,7 +36,7 @@ jobs:
       - name: Package (full = fábrica+dashboard · ota = só o app)
         run: |
           mkdir -p out
-          FACTORY=$(ls firmware/*/${{ matrix.target }}_factory.bin | head -1)
+          FACTORY=$(ls -t firmware/*/${{ matrix.target }}_factory.bin | head -1)
           esptool.py --chip ${{ matrix.chip }} merge_bin \
             -o out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}-full.bin \
             0x0 "$FACTORY" \
