@@ -398,10 +398,41 @@ void ch_web_setup()
   Serial.printf("[CH] Web server em http://%s\n", WiFi.localIP().toString().c_str());
 }
 
+// Watchdog do web server: se a porta 80 não responder (bind falhou no boot,
+// heap apertado etc.), tenta re-begin; persistindo, reinicia a placa. Sem isso
+// um begin() falho no boot deixa o nó headless para sempre (mDNS ok, web morta).
+static void ch_web_watchdog()
+{
+  static uint32_t lastCheck = 0;
+  static uint8_t fails = 0;
+  uint32_t now = millis();
+  if (now - lastCheck < 60000) return;
+  lastCheck = now;
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  WiFiClient probe;
+  bool ok = probe.connect(WiFi.localIP(), CH_HTTP_PORT, 1500);
+  probe.stop();
+  if (ok) { fails = 0; return; }
+
+  fails++;
+  Serial.printf("[CH] web watchdog: porta %d sem resposta (%u)\n", CH_HTTP_PORT, fails);
+  if (fails == 2) {
+    Serial.println("[CH] web watchdog: re-begin do servidor");
+    server.begin();
+  } else if (fails >= 4) {
+    Serial.println("[CH] web watchdog: reiniciando a placa");
+    ch_log_event("conn", "Web server dead — watchdog reboot");
+    delay(200);
+    ESP.restart();
+  }
+}
+
 void ch_web_loop()
 {
   static uint32_t lastPush = 0;
   uint32_t now = millis();
+  ch_web_watchdog();
 
   if (s_otaPrepare) {
     s_otaPrepare = false;
