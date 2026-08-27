@@ -462,7 +462,10 @@ void ch_web_loop()
   }
 
   if (s_otaBusy) {
-    if (now - s_otaLastChunk > 120000) {
+    // millis() fresco + cast com sinal: o handler async seta s_otaLastChunk
+    // DEPOIS do 'now' capturado no topo do loop — a subtração ficava negativa,
+    // estourava o unsigned e matava o OTA como "stalled" no instante em que armava
+    if ((int32_t)(millis() - s_otaLastChunk) > 120000) {
       Serial.println("[CH] OTA stalled — resuming mining");
       otaFailAndResume();
     }
