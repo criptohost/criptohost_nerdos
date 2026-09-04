@@ -29,6 +29,7 @@ O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ES
 - ⛏️ **Minera de verdade** — SHA-256d com acelerador de hardware do ESP32 + midstate caching, Stratum V1 completo
 - 📊 **Dashboard ao vivo** — hashrate com anel de progresso, shares, eficiência, best difficulty, temperatura, Wi-Fi, preços de mercado, log de conexão
 - 🕸️ **Fleet peer-to-peer** — cada nó descobre os vizinhos via mDNS; qualquer placa mostra a frota inteira, sem servidor central
+- 🔁 **Lista de peers replicada** — para nós fora do alcance do mDNS (VPS, Android): edite a lista na tela Fleet de **qualquer** nó — placa incluída — e todos os outros sincronizam sozinhos em ~1 min (revisão mais nova vence)
 - 🔄 **OTA pelo navegador** — atualize o firmware sem cabo USB, com dois slots (A/B) e configuração preservada
 - 📱 **Vira app no celular** — PWA: "Adicionar à Tela de Início" no iPhone/Android
 - 🛰️ **Órbita da rede** — mapa vivo da frota no Fleet: seus nós conectados em anéis ao redor do nó atual
@@ -90,7 +91,7 @@ curl http://ch-XXXX.local/api/status
 }
 ```
 
-Rotas: `/api/status` · `/api/config` · `/api/fleet` · `/api/events` · `/api/identify` · `/api/restart` · `/api/ota`. Documentação completa em [docs/API.md](docs/API.md). **Este contrato é congelado** — é ele que faz gerações e plataformas diferentes conviverem na mesma frota.
+Rotas: `/api/status` · `/api/config` · `/api/fleet` · `/api/peers` · `/api/events` · `/api/identify` · `/api/restart` · `/api/ota`. Documentação completa em [docs/API.md](docs/API.md). **Este contrato é congelado** — é ele que faz gerações e plataformas diferentes conviverem na mesma frota.
 
 ## ⛏️ Pools e moedas
 

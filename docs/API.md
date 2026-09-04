@@ -56,7 +56,17 @@ Restart reinicia mantendo config. Factory reset apaga config + Wi-Fi e volta ao 
 {"self": {<status deste nó>}, "peers": [{"worker","fw","hardware","ip","port"}]}
 ```
 
-Peers vêm de query mDNS `_criptohost._tcp` (cache; a primeira chamada dispara o refresh — repolle em ~5 s).
+Peers vêm de query mDNS `_criptohost._tcp` (cache; a primeira chamada dispara o refresh — repolle em ~5 s) somados às entradas da lista replicada (`/api/peers`), que podem trazer `"token"` — o browser envia esse valor em `X-CH-Token` ao consultar nós expostos na internet.
+
+## GET /api/peers · POST /api/peers
+
+Lista de peers replicada por gossip (frota inteira converge sozinha, revisão maior vence):
+
+```json
+{"content": "192.168.1.205\n1.2.3.4:8091 kJ8x…\n", "rev": 1788554496, "editable": true}
+```
+
+Formato: uma linha por nó, `ip[:porta] [token]` (porta default 80; `#` comenta; token = acesso a nó exposto). POST `{"content": "…"}` = edição humana (o nó cria uma revisão nova e ela propaga); POST `{"content": "…", "rev": N}` = push de sincronização (aceito só se `N` for maior que a revisão local; senão `{"ok":false,"stale":true}`). Cada nó consulta os vizinhos a cada ~60 s; agents também fazem push (alcança VPS que não conseguem puxar da rede de casa). Armazenado em `/peers.conf` + `/peers.rev` (LittleFS na placa, `ch/` no agent).
 
 ## GET /api/bench
 

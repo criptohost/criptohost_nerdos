@@ -29,6 +29,7 @@ CriptoHost NerdOS is an **open-source mining firmware** for ESP32 boards. It con
 - ⛏️ **Real mining** — SHA-256d with the ESP32 hardware accelerator + midstate caching, full Stratum V1
 - 📊 **Live dashboard** — hashrate ring, shares, efficiency, best difficulty, temperature, Wi-Fi, market prices, connection log
 - 🕸️ **Peer-to-peer fleet** — every node discovers its neighbors via mDNS; any board shows the whole fleet, no central server
+- 🔁 **Replicated peers list** — for nodes beyond mDNS reach (VPS, Android): edit the list on the Fleet page of **any** node — boards included — and every other node syncs it within ~1 min (newest revision wins)
 - 🔄 **Browser OTA** — update firmware without a USB cable, dual A/B slots, config preserved
 - 📱 **Installs as an app** — PWA: "Add to Home Screen" on iPhone/Android
 - 🛰️ **Network orbit** — a live fleet map on the Fleet page: your nodes connected in rings around the current one
@@ -90,7 +91,7 @@ curl http://ch-XXXX.local/api/status
 }
 ```
 
-Routes: `/api/status` · `/api/config` · `/api/fleet` · `/api/events` · `/api/identify` · `/api/restart` · `/api/ota`. Full reference in [docs/API.md](docs/API.md). **This contract is frozen** — it's what lets different generations and platforms live on the same fleet.
+Routes: `/api/status` · `/api/config` · `/api/fleet` · `/api/peers` · `/api/events` · `/api/identify` · `/api/restart` · `/api/ota`. Full reference in [docs/API.md](docs/API.md). **This contract is frozen** — it's what lets different generations and platforms live on the same fleet.
 
 ## ⛏️ Pools and coins
 

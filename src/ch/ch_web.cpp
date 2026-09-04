@@ -331,6 +331,29 @@ void ch_web_setup()
     sendJson(r, "{\"self\":" + ch_status_json() + ",\"peers\":" + s_fleetCache + "}");
   });
 
+  // Lista de peers replicada (gossip): editável em qualquer nó, sincroniza sozinha
+  server.on("/api/peers", HTTP_GET, [](AsyncWebServerRequest* r) { sendJson(r, ch_peers_json()); });
+  server.on("/api/peers", HTTP_POST, [](AsyncWebServerRequest*) {}, nullptr,
+    [](AsyncWebServerRequest* r, uint8_t* data, size_t len, size_t index, size_t total) {
+      static String body;   // ponytail: 1 POST por vez (lista pode passar de 1 chunk)
+      if (index == 0) body = "";
+      body.concat((const char*)data, len);
+      if (index + len != total) return;
+      DynamicJsonDocument doc(4096);
+      if (deserializeJson(doc, body) || total > 3072) {
+        body = ""; sendJson(r, "{\"error\":\"invalid json\"}", 400); return;
+      }
+      String content = doc["content"] | "";
+      uint32_t rev = doc["rev"] | 0;
+      body = "";
+      String err;
+      if (!ch_peers_set(content, rev, err)) {
+        if (err == "stale") { sendJson(r, "{\"ok\":false,\"stale\":true}"); return; }
+        sendJson(r, "{\"error\":\"" + jsonEscape(err) + "\"}", 400); return;
+      }
+      sendJson(r, "{\"ok\":true}");
+    });
+
   server.on("/api/ota/prepare", HTTP_POST, [](AsyncWebServerRequest* r) {
     if (s_otaBusy) {
       sendJson(r, "{\"ok\":true}");
@@ -387,7 +410,7 @@ void ch_web_setup()
       AsyncWebServerResponse* resp = r->beginResponse(204);
       addCors(resp);
       resp->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
+      resp->addHeader("Access-Control-Allow-Headers", "Content-Type, X-CH-Token");
       r->send(resp);
     } else r->send(404, "text/plain", "Not found");
   });
@@ -486,6 +509,12 @@ void ch_web_loop()
   if (s_fleetRefresh) {
     s_fleetRefresh = false;
     s_fleetCache = ch_fleet_json(); // bloqueia ~3s aqui no loop(), mineração não para (tasks próprias)
+  }
+
+  static uint32_t lastPeersSync = 0;
+  if (WiFi.status() == WL_CONNECTED && now - lastPeersSync >= 60000) {
+    lastPeersSync = now;
+    ch_peers_sync_tick();
   }
 
   if (s_wifiScan) {
