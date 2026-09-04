@@ -261,17 +261,14 @@ static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t 
 // ---- /api/bench (M1-05) ----
 static String benchJson()
 {
-  // Bench SW: nerdSHA256plus (midstate + double hash) por 200 ms
+  // kH/s por backend medidos no boot (ch_sha_selftest) + hashrate vivo do minerador
   extern uint32_t elapsedKHs;
-  uint8_t header[80] = {0}, hash[32];
-  nerdSHA256_context mid;
-  nerd_mids(mid.digest, header);
-  uint32_t n = 0, t0 = millis();
-  while (millis() - t0 < 200) {
-    for (int i = 0; i < 100; i++) { header[76] = n; nerd_sha256d(&mid, header + 64, hash); n++; }
-  }
-  double swKhs = (double)n / (millis() - t0);
-  String j = "{\"sw_khs\":" + String(swKhs, 1);
+  const ch_sha_bench_t& b = ch_sha_bench;
+  String j = "{\"sw_khs\":" + String(b.sw_khs, 1);
+  j += ",\"mbedtls_khs\":" + String(b.mbedtls_khs, 1);
+  j += ",\"hw_khs\":" + String(b.hw_khs, 1);
+  j += ",\"hw_backend\":\"" + String(b.hw_backend ? b.hw_backend : "none") + "\"";
+  j += ",\"hw_vectors_ok\":" + String(b.hw_ok) + ",\"hw_vectors\":" + String(b.hw_n);
   j += ",\"live_khs\":" + String((double)elapsedKHs, 1);
 #ifdef USE_HW_SHA
   j += ",\"method\":\"hw\"}";

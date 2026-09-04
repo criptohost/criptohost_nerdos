@@ -89,6 +89,10 @@ void setup()
   while (1) HwShaTest();
 #endif
 
+#ifdef CH_BUILD
+  ch_sha_selftest();
+#endif
+
   // Setup the buttons
   #if defined(PIN_BUTTON_1) && !defined(PIN_BUTTON_2) //One button device
     button1.setPressMs(5*SECOND_MS);

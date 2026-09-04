@@ -1187,9 +1187,141 @@ void minerWorkerHw(void * task_id)
   }
 }
 
+#ifdef CH_BUILD
+// Um double-SHA no periférico do D0WD (mesma sequência de registradores do minerWorkerHw).
+// Motor já travado (esp_sha_lock_engine). Digest fica nos registradores; leitor escolhe read/swap_if.
+static inline void ch_hw_hash(const uint8_t* swapped, uint32_t nonce)
+{
+  nerd_sha_ll_fill_text_block_sha256(swapped);
+  sha_ll_start_block(SHA2_256);
+  nerd_sha_hal_wait_idle();
+  nerd_sha_ll_fill_text_block_sha256_upper(swapped + 64, nonce);
+  sha_ll_continue_block(SHA2_256);
+  nerd_sha_hal_wait_idle();
+  sha_ll_load(SHA2_256);
+  nerd_sha_hal_wait_idle();
+  nerd_sha_ll_fill_text_block_sha256_double();
+  sha_ll_start_block(SHA2_256);
+  nerd_sha_hal_wait_idle();
+  sha_ll_load(SHA2_256);
+  nerd_sha_hal_wait_idle();
+}
+#endif  //CH_BUILD
+
 #endif  //CONFIG_IDF_TARGET_ESP32
 
+#if defined(CH_BUILD) && (defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3))
+// Um double-SHA no periférico do S3/C3 a partir do midstate HW (mesma sequência do minerWorkerHw).
+// Hardware já adquirido (esp_sha_acquire_hardware) e SHA_MODE_REG setado.
+static inline void ch_hw_hash(const uint8_t* mid, const uint8_t* tail64, uint32_t nonce)
+{
+  nerd_sha_ll_write_digest((void*)mid);
+  nerd_sha_ll_fill_text_block_sha256(tail64, nonce);
+  REG_WRITE(SHA_CONTINUE_REG, 1);
+  sha_ll_load(SHA2_256);
+  nerd_sha_hal_wait_idle();
+  nerd_sha_ll_fill_text_block_sha256_inter();
+  REG_WRITE(SHA_START_REG, 1);
+  sha_ll_load(SHA2_256);
+  nerd_sha_hal_wait_idle();
+}
+#endif
+
 #endif  //HARDWARE_SHA265
+
+#ifdef CH_BUILD
+// §4.3 passo 4 (M1-01/M1-05): bench de boot por backend — kH/s de double-SHA por nonce —
+// e verificação do pipeline HW contra mbedtls em vetores pseudo-aleatórios.
+// Roda no setup(), antes das tasks: motor SHA sem concorrência. Resultado em ch_sha_bench (/api/bench).
+ch_sha_bench_t ch_sha_bench = {};
+
+static void ch_bench_header(uint8_t* h, uint32_t& rnd)  // 80 bytes aleatórios + padding SHA; nonce = bytes 76..79
+{
+  for (int i = 0; i < 80; ++i) { rnd = rnd * 1664525u + 1013904223u; h[i] = (uint8_t)(rnd >> 24); }
+  memset(h + 80, 0, 48);
+  h[80] = 0x80; h[126] = 0x02; h[127] = 0x80;
+}
+
+static void ch_bench_mbedtls(const uint8_t* header80, uint8_t* out)
+{
+  uint8_t inter[32];
+  mbedtls_sha256_ret(header80, 80, inter, 0);
+  mbedtls_sha256_ret(inter, 32, out, 0);
+}
+
+// Roda fn(nonce) por ~250 ms em blocos de 256 e devolve kH/s.
+template <typename F> static float ch_bench_khs(F fn)
+{
+  uint32_t n = 0, t0 = micros(), dt;
+  do { for (int i = 0; i < 256; ++i) fn(n++); dt = micros() - t0; } while (dt < 250000);
+  return (float)n * 1000.0f / (float)dt;
+}
+
+void ch_sha_selftest()
+{
+  const int N = 1000;
+  uint8_t header[128], h_ref[32], h_hw[32];
+  uint32_t rnd = 0x43480001, mid[8], bake[16];
+  ch_sha_bench_t& b = ch_sha_bench;
+  b.hw_n = 0; b.hw_ok = 0; b.hw_khs = 0;
+
+  // ---- SW (nerdSHA256plus, caminho do minerWorkerSw: midstate + bake) ----
+  ch_bench_header(header, rnd);
+  nerd_mids(mid, header);
+  nerd_sha256_bake(mid, header + 64, bake);
+  b.sw_khs = ch_bench_khs([&](uint32_t n) { memcpy(header + 76, &n, 4); nerd_sha256d_baked(mid, header + 64, bake, h_hw); });
+
+  // ---- mbedtls (double completo, 80 bytes; usa HW se CONFIG_MBEDTLS_HARDWARE_SHA) ----
+  b.mbedtls_khs = ch_bench_khs([&](uint32_t n) { memcpy(header + 76, &n, 4); ch_bench_mbedtls(header, h_hw); });
+
+  // ---- HW (registradores diretos) ----
+#if defined(HARDWARE_SHA265) && defined(CONFIG_IDF_TARGET_ESP32)
+  uint8_t swapped[128];
+  esp_sha_lock_engine(SHA2_256);
+  for (int v = 0; v < N; ++v)
+  {
+    ch_bench_header(header, rnd);
+    uint32_t nonce; memcpy(&nonce, header + 76, 4);
+    for (int i = 0; i < 32; ++i) ((uint32_t*)swapped)[i] = __builtin_bswap32(((uint32_t*)header)[i]);
+    ch_hw_hash(swapped, nonce);
+    nerd_sha_ll_read_digest(h_hw);
+    for (int i = 0; i < 8; ++i) ((uint32_t*)h_hw)[i] = __builtin_bswap32(((uint32_t*)h_hw)[i]);
+    ch_bench_mbedtls(header, h_ref);
+    b.hw_n++; if (memcmp(h_hw, h_ref, 32) == 0) b.hw_ok++;
+  }
+  b.hw_khs = ch_bench_khs([&](uint32_t n) { ch_hw_hash(swapped, n); nerd_sha_ll_read_digest_swap_if(h_hw); });
+  esp_sha_unlock_engine(SHA2_256);
+  b.hw_backend = "esp32-regs";
+#elif defined(HARDWARE_SHA265) && (defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3))
+  uint8_t hw_mid[32];
+  esp_sha_acquire_hardware();
+  for (int v = 0; v < N; ++v)
+  {
+    ch_bench_header(header, rnd);
+    uint32_t nonce; memcpy(&nonce, header + 76, 4);
+    sha_hal_hash_block(SHA2_256, header, 64 / 4, true);
+    sha_hal_read_digest(SHA2_256, hw_mid);
+    REG_WRITE(SHA_MODE_REG, SHA2_256);
+    ch_hw_hash(hw_mid, header + 64, nonce);
+    nerd_sha_ll_read_digest(h_hw);
+    ch_bench_mbedtls(header, h_ref);
+    b.hw_n++; if (memcmp(h_hw, h_ref, 32) == 0) b.hw_ok++;
+  }
+  REG_WRITE(SHA_MODE_REG, SHA2_256);
+  b.hw_khs = ch_bench_khs([&](uint32_t n) { ch_hw_hash(hw_mid, header + 64, n); nerd_sha_ll_read_digest_if(h_hw); });
+  esp_sha_release_hardware();
+  b.hw_backend = "s3-regs";
+#else
+  b.hw_backend = "none";
+#endif
+
+  String msg = "SHA bench: sw " + String(b.sw_khs, 1) + " kH/s, mbedtls " + String(b.mbedtls_khs, 1) +
+               " kH/s, hw(" + b.hw_backend + ") " + String(b.hw_khs, 1) + " kH/s, vetores HW==mbedtls " +
+               String(b.hw_ok) + "/" + String(b.hw_n);
+  Serial.println("[CH] " + msg);
+  ch_log_event("test", msg);
+}
+#endif  //CH_BUILD
 
 
 #define DELAY 100
