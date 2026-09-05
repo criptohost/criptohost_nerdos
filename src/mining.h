@@ -16,6 +16,9 @@
 
 #define TARGET_BUFFER_SIZE 64
 
+#include "mining/sha_backend.h"
+extern volatile uint32_t ch_hw_mismatch;
+
 void runMonitor(void *name);
 
 void runStratumWorker(void *name);
@@ -32,13 +35,6 @@ void resetStat();
 void mining_register_tasks(TaskHandle_t miner1, TaskHandle_t miner2, TaskHandle_t stratum, TaskHandle_t monitor);
 void mining_pause_for_ota();
 void mining_resume_after_ota();
-typedef struct {                  // §4.3 passo 4: kH/s por backend, medido no boot (ch_sha_selftest)
-  float sw_khs, mbedtls_khs, hw_khs;
-  int hw_ok, hw_n;                // vetores HW == mbedtls
-  const char* hw_backend;         // "esp32-regs" | "s3-regs" | "none"
-} ch_sha_bench_t;
-extern ch_sha_bench_t ch_sha_bench;
-void ch_sha_selftest(); // bench + validação HW SHA no boot (M1-01/M1-05)
 #endif
 
 typedef struct{

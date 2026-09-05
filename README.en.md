@@ -22,11 +22,11 @@
 
 CriptoHost NerdOS is an **open-source mining firmware** for ESP32 boards. It connects to a real pool, mines real SHA-256d, and shows everything on a **local web dashboard** — no app, no cloud, no sign-up.
 
-> ⚠️ **Honest framing**: this is a **hobby and education** project. An ESP32 does ~350 kH/s; an ASIC does 200 TH/s — 500 million times more. You won't get rich: you'll **learn** how Stratum, difficulty, shares and blocks work, watching it all live. Expected return is ~zero, and we say that proudly.
+> ⚠️ **Honest framing**: this is a **hobby and education** project. An ESP32 DevKit V1 does ~700 kH/s; an ASIC does 200 TH/s — 300 million times more. You won't get rich: you'll **learn** how Stratum, difficulty, shares and blocks work, watching it all live. Expected return is ~zero, and we say that proudly.
 
 ## ✨ What it does
 
-- ⛏️ **Real mining** — SHA-256d with the ESP32 hardware accelerator + midstate caching, full Stratum V1
+- ⛏️ **Real mining** — SHA-256d on the ESP32 hardware accelerator with a register-level asm pipeline (~705 kH/s sustained on DevKit V1, [bench](docs/BENCH-SHA.md)), full Stratum V1
 - 📊 **Live dashboard** — hashrate ring, shares, efficiency, best difficulty, temperature, Wi-Fi, market prices, connection log
 - 🕸️ **Peer-to-peer fleet** — every node discovers its neighbors via mDNS; any board shows the whole fleet, no central server
 - 🔁 **Replicated peers list** — for nodes beyond mDNS reach (VPS, Android): edit the list on the Fleet page of **any** node — boards included — and every other node syncs it within ~1 min (newest revision wins)
@@ -70,7 +70,7 @@ Every CriptoHost node speaks the same contract: it announces `_criptohost._tcp` 
 
 | Repository | What it mines | Typical hashrate |
 |---|---|---|
-| **criptohost_nerdos** (this one) | ESP32 (DevKit V1, S3, T-Display) | ~350 kH/s |
+| **criptohost_nerdos** (this one) | ESP32 (DevKit V1, S3, T-Display) | ~705 kH/s (DevKit V1) · ~300 kH/s (S3) |
 | [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux and macOS (CPU) | 20–165 MH/s |
 | [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = panel) | ~47 MH/s |
 

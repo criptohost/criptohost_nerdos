@@ -1,6 +1,6 @@
 # CriptoHost NerdOS — Planejamento e Escopo de Desenvolvimento
 
-**Versão:** 2.0 · **Data:** 14/08/2026
+**Versão:** 2.1 · **Data:** 04/09/2026 · *(v2.1: metas de hashrate em dois níveis + pipeline SHA de registros diretos)*
 **Produto de:** [Cripto Host](https://cripto.host) — "Node de um jeito fácil"
 **Base de código:** fork de [BitMaker-hub/NerdMiner_v2](https://github.com/BitMaker-hub/NerdMiner_v2) (GPL-3.0)
 **Referência de regras de negócio e escopo funcional:** Ha•Kou NerdOS (usado apenas como benchmark de funcionalidades; interface, identidade visual e marca serão 100% Cripto Host)
@@ -26,7 +26,8 @@ O Ha•Kou NerdOS serve **exclusivamente como referência de escopo funcional** 
 
 | # | Objetivo | Meta |
 |---|---|---|
-| O1 | Hashrate por placa com acelerador SHA de hardware | ≥300 kH/s (S3) e ≥350 kH/s (DevKit V1) |
+| O1 | Hashrate por placa — **baseline** (garante a v1.0) | ≥300 kH/s (S3) e ≥350 kH/s (DevKit V1) |
+| O1b | Hashrate por placa — **stretch** (pipeline SHA de registros diretos) | ≥700 kH/s (DevKit V1); meta de pesquisa 1 MH/s |
 | O2 | Dashboard web local com atualização ao vivo | Refresh ≤5 s, sem travar a mineração |
 | O3 | Fleet management na LAN | Descoberta automática ≥95% dos nós em ≤30 s |
 | O4 | OTA via web sem cabo USB | Sucesso ≥99%, config preservada, rollback em falha |
@@ -97,7 +98,7 @@ GET /api/status →
   "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
-  "pool": "digi.hmpool.io:3337",
+  "pool": "eu.digi.hmpool.io:3337",
   "shares": {"found":251,"sent":251,"accepted":241,"rejected":10,"pending":0},
   "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0
 }
@@ -107,10 +108,19 @@ Decisão de design: **sem servidor central** — qualquer nó abre o Fleet e enx
 
 ### 4.3 Módulo de aceleração SHA-256 (diferencial de performance)
 
-- ESP32/S3: periférico SHA via registros diretos (referência open: SparkMiner) ou mbedTLS com `CONFIG_MBEDTLS_HARDWARE_SHA`.
-- **Midstate caching**: pré-computar o primeiro bloco SHA-256 do header de 80 bytes; loop de nonce processa só o segundo bloco + double hash.
-- Fallback automático para software (caminho do NerdMiner) → compatibilidade com S2 e portes futuros.
-- Benchmark integrado: comando serial + card no dashboard (kH/s por método).
+Dois níveis de implementação, ambos atrás da mesma interface `IShaBackend`:
+
+**Nível 1 — Baseline (M1-01/02, ≥350 kH/s):** periférico SHA via mbedTLS com `CONFIG_MBEDTLS_HARDWARE_SHA` ou chamadas `esp_sha` do IDF; midstate caching; fallback automático para software (caminho do NerdMiner) → compatibilidade com S2 e portes futuros. É o patamar comprovado (BitMiner24 no S3, referência de escopo no DevKit) e o que garante a v1.0.0.
+
+**Nível 2 — Pipeline de registros diretos (M1-13, stretch ≥700 kH/s no DevKit V1):** o mesmo silício dos miners comerciais de ~1000 kH/s (NMMiner em ESP32-WROOM-32) — a diferença é só firmware. Técnicas a implementar, na ordem de ganho esperado:
+1. **Escrita direta nos registros do motor SHA** (sem mbedTLS, locks ou cópias de buffer) — referência open GPL: SparkMiner (~715–725 kH/s no ESP32 clássico) + Technical Reference Manual da Espressif.
+2. **Pipelining CPU ↔ periférico**: enquanto o motor processa o bloco N, a CPU prepara o header N+1 (nonce + escrita de registros); o gargalo passa a ser o barramento, não o cálculo.
+3. **Early-exit no teste do target**: comparar só a word alta do resultado antes de qualquer verificação completa.
+4. **Loop crítico em IRAM** (`IRAM_ATTR`), ambos os cores alimentando o pipeline, mínimo de ticks do RTOS para Wi-Fi/display.
+5. Meta de pesquisa (M3/M4): **1 MH/s** — paridade com o NMMiner via assembly/unrolling, sem reaproveitar código dele (modelo de licença/ativação incompatível; apenas SparkMiner e TRM como fontes).
+
+- Benchmark integrado: comando serial + `/api/bench` + card no dashboard (kH/s por backend: SW / HW-baseline / HW-pipeline).
+- Realismo: números de marketing (~1000 kH/s) são medidos sem display ativo; no S3 o motor SHA tem perfil diferente do clássico — validar cada chip separadamente.
 
 ---
 
@@ -192,7 +202,7 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 | M0-03 | Targets `ch-devkit-v1`, `ch-esp32s3`, `ch-tdisplay-s3` no platformio.ini | chore, ci | 1d | `pio run -e <target>` compila os 3 sem warnings críticos |
 | M0-04 | Migração SPIFFS → LittleFS | chore, area:web | 1d | Config sobrevive a reflash de firmware (partição preservada) |
 | M0-05 | Refatorar estado global para `state/monitor` (single source of truth) | chore, area:mining | 3d | Todas as métricas (shares, hashrate, temp, uptime) lidas de uma struct única thread-safe |
-| M0-06 | Validação de mineração nos 3 targets em `digi.hmpool.io:3337` | test | 2d | 24 h contínuas por target; shares aceitos registrados; zero reboots |
+| M0-06 | Validação de mineração nos 3 targets em `eu.digi.hmpool.io:3337` | test | 2d | 24 h contínuas por target; shares aceitos registrados; zero reboots |
 | M0-07 | BRANDING.md + kit visual Cripto Host (paleta, logo, tipografia) | docs, area:brand | 2d | Paleta com base #0B041A documentada; assets em `/data/brand/`; zero assets de terceiros (O7) |
 | M0-08 | Release automatizada (tag → GitHub Release com `.bin` + changelog) | chore, ci | 1d | `git tag v*` publica release com os 3 binários nomeados |
 
@@ -214,8 +224,9 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 | M1-10 | Share data stream + connection log no dashboard | feat, area:web | 2d | Últimos N eventos visíveis; rejeições destacadas |
 | M1-11 | mDNS `_criptohost._tcp` com TXT (worker, fw, hardware) | feat, area:fleet | 1d | Nó descoberto via `dns-sd`/avahi em <5 s |
 | M1-12 | Teste de estabilidade 7 dias (2 placas) | test | 7d | O5 atingido: uptime ≥7d, eficiência ≥95% |
+| M1-13 | **Pipeline SHA de registros diretos** (ref. SparkMiner + TRM Espressif) — backend `HwPipeline` atrás de `IShaBackend` | feat, area:mining, stretch | 8d | Stretch: ≥700 kH/s no DevKit V1; shares válidos na pool (zero rejeição por hash inválido); seleção de backend por flag `SHA_BACKEND=pipeline`; fallback para baseline se falhar auto-teste de vetores no boot |
 
-**Critério de saída M1:** O1 e O2 atingidos; dashboard completo com identidade CH.
+**Critério de saída M1:** O1 e O2 atingidos; dashboard completo com identidade CH. **O1b (M1-13) é stretch — não bloqueia a saída do M1**, mas seu resultado define se o marketing da v1.0 usa "350+" ou "700+".
 
 ### 🛰 Milestone M2 — Fleet + Config + OTA (v1.0.0) · 4–5 semanas
 
@@ -246,6 +257,7 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 | M3-04 | Adapters de portabilidade: `IStorage`, `IHttpServer`, `IOta`, `IMdns` | chore, area:idf | 5d | Core sem `#include <Arduino.h>` fora de `src/adapters/` |
 | M3-05 | Task/heap tuning para single-core (web + mining simultâneos) | feat, area:mining | 3d | Dashboard responsivo no C3 sem derrubar hashrate >5% |
 | M3-06 | CI expandida (5 targets) + testes de regressão de hashrate | chore, ci | 2d | Benchmark automático comparando build atual vs anterior |
+| M3-07 | **Pesquisa 1 MH/s no ESP32 clássico** (assembly do hot loop, unrolling, tuning de barramento) | feat, area:mining, research | 10d | Relatório com kH/s por técnica; ≥900 kH/s = sucesso; resultados aplicados ao backend `HwPipeline` sem código de terceiros não-GPL |
 
 **Critério de saída M3:** Tier 2 entregue; código pronto para o strangler pattern da Fase 4.
 
@@ -272,9 +284,9 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 
 | Tier | Placa | Milestone | Meta kH/s | Papel |
 |---|---|---|---|---|
-| 1 | ESP32 DevKit V1 (D0WD) | M0–M2 | ≥350 | "Recomendado" — custo mínimo, maior teto |
-| 1 | ESP32-S3 headless | M0–M2 | ≥300 | Nó de frota moderno |
-| 1 | LilyGO T-Display S3 | M1–M2 | ≥300 | Variante com display |
+| 1 | ESP32 DevKit V1 (D0WD) | M0–M2 | ≥350 · stretch ≥700 · pesquisa 1 MH/s | "Recomendado" — custo mínimo, **maior teto comprovado** (mesmo silício dos miners comerciais de ~1000 kH/s) |
+| 1 | ESP32-S3 headless | M0–M2 | ≥300 · stretch a validar | Nó de frota moderno (motor SHA com perfil diferente do clássico) |
+| 1 | LilyGO T-Display S3 | M1–M2 | ≥300 | Variante com display (display ativo reduz o teto) |
 | 2 | ESP32-C3 | M3 | ≥250 | Nó econômico/baixo consumo |
 | 2 | ESP32-C6 / C61 | M3–M4 | ≥250 | Sucessor do C3, Wi-Fi 6 |
 | 3 | ESP32-C5 | M4 | ≥250 | Dual-band + bootloader OTA seguro |
@@ -295,6 +307,8 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 | Risco | Prob. | Mitigação |
 |---|---|---|
 | HW SHA abaixo da meta no S3 | Média | Priorizar D0WD; benchmark contínuo (M1-05); piso aceitável 250 kH/s |
+| Pipeline de registros (M1-13) gerar hashes inválidos (race CPU↔periférico) | Média | Auto-teste de vetores no boot com fallback p/ baseline; validar em pool com zero rejeição por hash inválido antes de promover o backend |
+| Contaminação de licença ao estudar o NMMiner | Baixa | Regra clean-room: apenas SparkMiner (GPL) e TRM da Espressif como fontes; documentar origem de cada técnica no PR |
 | Heap insuficiente (web + TLS preços + mining) | Média | Preços via cache/proxy; WS payload compacto; PSRAM no S3 |
 | Pools low-diff saírem do ar | Baixa | Perfis múltiplos (M2-05) + guia nó próprio (M2-11) |
 | Breaking changes IDF 6.0 | Alta (esperado) | Strangler pattern (M4-01→06); adapters isolam impacto |
@@ -310,3 +324,28 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 3. O1–O7 verificados e documentados no repo.
 4. Web flasher público em `nerdos.cripto.host` + guias PT-BR/EN.
 5. Milestones M3/M4 publicados como issues no GitHub.
+
+---
+
+## 10. Handoff para a branch de testes (Claude Code)
+
+> Instruções para a sessão do projeto validar as novas possibilidades de hashrate em uma branch isolada, sem afetar o caminho da v1.0.
+
+**Branch:** `research/sha-pipeline` (a partir de `main` pós-M0). Nada desta branch entra em `main` sem passar pelos critérios de M1-13.
+
+**Objetivo da validação:** medir, no mesmo hardware (ESP32 DevKit V1 / WROOM-32), o kH/s real de cada backend SHA e confirmar se o stretch de ≥700 kH/s é atingível com código GPL-limpo.
+
+**Passos sugeridos:**
+1. Criar a interface `IShaBackend` (`src/mining/sha_backend.h`) com três implementações: `SwBackend` (nerdSHA256plus atual), `HwBaselineBackend` (mbedTLS/`esp_sha`) e `HwPipelineBackend` (registros diretos + pipelining).
+2. Implementar `HwPipelineBackend` usando como referência **apenas** o SparkMiner (GPL) e o ESP32 Technical Reference Manual (cap. SHA Accelerator) — registrar a origem de cada técnica em comentários.
+3. Auto-teste no boot: 8 vetores conhecidos (header→hash esperado); backend só é ativado se passar; caso contrário fallback silencioso para baseline com log.
+4. `tools/bench/bench.py`: lê a serial por 60 s e reporta média/mínimo/máximo de kH/s por backend; rodar 3× cada, com e sem Wi-Fi conectado.
+5. Teste de campo: 2 h em `eu.digi.hmpool.io:3337` por backend; critério = **zero shares rejeitados por "invalid hash"** (rejeições por stale/duplicate são aceitáveis).
+6. Registrar tudo em `docs/BENCH-SHA.md` (tabela: backend × chip × Wi-Fi on/off × display on/off) e abrir o PR referenciando M1-13.
+
+**Sinais de decisão:**
+- ≥700 kH/s com shares 100% válidos → promover `HwPipelineBackend` como default do DevKit V1 e atualizar marketing para "700+ kH/s".
+- 450–700 kH/s → manter como opt-in (`SHA_BACKEND=pipeline`) e seguir com M3-07.
+- <450 kH/s ou hashes inválidos intermitentes → arquivar a branch com o relatório e manter baseline; reavaliar no IDF 6.0 (M4).
+
+**Não fazer nesta branch:** tocar em web/fleet/OTA, alterar o contrato `/api/*`, ou copiar qualquer trecho de firmwares com licença de ativação (NMMiner).

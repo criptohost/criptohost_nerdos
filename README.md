@@ -22,11 +22,11 @@
 
 O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ESP32. Ele conecta a placa numa pool real, minera SHA-256d de verdade e entrega tudo num **dashboard web local** — sem app, sem nuvem, sem cadastro.
 
-> ⚠️ **Enquadramento honesto**: isto é um projeto de **hobby e educação**. Um ESP32 faz ~350 kH/s; um ASIC faz 200 TH/s — 500 milhões de vezes mais. Você não vai enriquecer: vai **aprender** como Stratum, dificuldade, shares e blocos funcionam, vendo tudo acontecer ao vivo. O retorno esperado é ~zero, e dizemos isso com orgulho.
+> ⚠️ **Enquadramento honesto**: isto é um projeto de **hobby e educação**. Um ESP32 DevKit V1 faz ~700 kH/s; um ASIC faz 200 TH/s — 300 milhões de vezes mais. Você não vai enriquecer: vai **aprender** como Stratum, dificuldade, shares e blocos funcionam, vendo tudo acontecer ao vivo. O retorno esperado é ~zero, e dizemos isso com orgulho.
 
 ## ✨ O que ele faz
 
-- ⛏️ **Minera de verdade** — SHA-256d com acelerador de hardware do ESP32 + midstate caching, Stratum V1 completo
+- ⛏️ **Minera de verdade** — SHA-256d no acelerador de hardware do ESP32 com pipeline de registros em asm (~705 kH/s sustentado no DevKit V1, [bench](docs/BENCH-SHA.md)), Stratum V1 completo
 - 📊 **Dashboard ao vivo** — hashrate com anel de progresso, shares, eficiência, best difficulty, temperatura, Wi-Fi, preços de mercado, log de conexão
 - 🕸️ **Fleet peer-to-peer** — cada nó descobre os vizinhos via mDNS; qualquer placa mostra a frota inteira, sem servidor central
 - 🔁 **Lista de peers replicada** — para nós fora do alcance do mDNS (VPS, Android): edite a lista na tela Fleet de **qualquer** nó — placa incluída — e todos os outros sincronizam sozinhos em ~1 min (revisão mais nova vence)
@@ -70,7 +70,7 @@ Todo nó CriptoHost fala o mesmo contrato: anuncia `_criptohost._tcp` via mDNS e
 
 | Repositório | O que minera | Hashrate típico |
 |---|---|---|
-| **criptohost_nerdos** (este) | ESP32 (DevKit V1, S3, T-Display) | ~350 kH/s |
+| **criptohost_nerdos** (este) | ESP32 (DevKit V1, S3, T-Display) | ~705 kH/s (DevKit V1) · ~300 kH/s (S3) |
 | [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux e macOS (CPU) | 20–165 MH/s |
 | [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = painel) | ~47 MH/s |
 

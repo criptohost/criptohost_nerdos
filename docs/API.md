@@ -70,7 +70,7 @@ Formato: uma linha por nó, `ip[:porta] [token]` (porta default 80; `#` comenta;
 
 ## GET /api/bench
 
-`{"sw_khs": 123.4, "live_khs": 356.2, "method": "hw|sw"}` — benchmark SW síncrono (200 ms) + hashrate ao vivo.
+`{"sw_khs": 41.1, "backends": {"sw": {"khs": 41.1, "ok": true}, "hw-baseline": {"khs": 13.6, "ok": true}, "hw-pipeline": {"khs": 666.7, "ok": true}}, "hw_backend": "hw-pipeline", "hw_mismatch": 0, "live_khs": 705.0, "method": "hw|sw"}` — kH/s por backend medidos no boot (motor sem concorrência), `ok` = passou nos vetores/cross-check, `hw_backend` = escolhido para o core 1, `hw_mismatch` = candidatos HW reprovados na conferência em software, `live_khs` = hashrate ao vivo. Chaves `sw_khs`/`live_khs`/`method` mantidas da v0.2.
 
 ## WS /ws
 

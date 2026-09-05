@@ -28,8 +28,8 @@
 | Escopo (§5) | Neste repo | Origem |
 |---|---|---|
 | `mining/miner` | `src/mining.cpp` (`minerWorkerHw/Sw`) | upstream (intacto) |
-| `mining/sha256_hw` | `src/ShaTests/nerdSHA_HWTest.*` + caminho HW do miner | upstream |
-| `mining/sha256_sw` | `src/ShaTests/nerdSHA256plus.*` (midstate caching) | upstream |
+| `mining/sha_backend` | `src/mining/sha_backend.*` — `IShaBackend` com `sw` / `hw-baseline` / `hw-pipeline` (asm), selftest e bench de boot | CH (v0.3.0) |
+| `mining/sha256_sw` | `src/ShaTests/nerdSHA256plus.*` (midstate caching), usado pelo `SwBackend` | upstream |
 | `mining/stratum` | `src/stratum.cpp` | upstream (intacto) |
 | `net/wifi_mgr` | `src/wManager.cpp` (WiFiManager, AP `CriptoHostNerdOS`) | upstream + re-skin |
 | `net/mdns_svc` | `src/ch/ch_mdns.cpp` | **novo** |
@@ -51,7 +51,7 @@ Decisões:
 
 | Task | Core | Prio | Papel |
 |---|---|---|---|
-| MinerHw-0 / MinerSw-1 | 0/1 | 3/1 | loop de nonce (HW SHA + midstate) |
+| MinerHw-0 / MinerSw-1 | 1/0 | 3/1 | `minerWorker(IShaBackend&)`: HW no core 1 (pipeline asm), SW no core 0 |
 | Stratum | 1 | 4 | subscribe/authorize/notify/submit |
 | Monitor | 1 | 5 | hashrate, uptime, persistência de stats |
 | loop() Arduino | 1 | 4 | WiFiManager + camada CH (web/ws/mdns) |

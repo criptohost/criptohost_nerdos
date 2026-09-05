@@ -261,14 +261,16 @@ static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t 
 // ---- /api/bench (M1-05) ----
 static String benchJson()
 {
-  // kH/s por backend medidos no boot (ch_sha_selftest) + hashrate vivo do minerador
+  // kH/s por backend medidos no boot (sha_backend_boot) + hashrate vivo. Chaves antigas (sw_khs/live_khs/method) mantidas.
   extern uint32_t elapsedKHs;
-  const ch_sha_bench_t& b = ch_sha_bench;
-  String j = "{\"sw_khs\":" + String(b.sw_khs, 1);
-  j += ",\"mbedtls_khs\":" + String(b.mbedtls_khs, 1);
-  j += ",\"hw_khs\":" + String(b.hw_khs, 1);
-  j += ",\"hw_backend\":\"" + String(b.hw_backend ? b.hw_backend : "none") + "\"";
-  j += ",\"hw_vectors_ok\":" + String(b.hw_ok) + ",\"hw_vectors\":" + String(b.hw_n);
+  const ShaBench& b = sha_bench;
+  auto entry = [](const ShaBenchEntry& e) {
+    return "{\"khs\":" + String(e.khs, 1) + ",\"ok\":" + (e.ok ? "true" : "false") + "}";
+  };
+  String j = "{\"sw_khs\":" + String(b.sw.khs, 1);
+  j += ",\"backends\":{\"sw\":" + entry(b.sw) + ",\"hw-baseline\":" + entry(b.baseline) + ",\"hw-pipeline\":" + entry(b.pipeline) + "}";
+  j += ",\"hw_backend\":\"" + String(b.hw ? b.hw->name() : "none") + "\"";
+  j += ",\"hw_mismatch\":" + String((unsigned long)ch_hw_mismatch);
   j += ",\"live_khs\":" + String((double)elapsedKHs, 1);
 #ifdef USE_HW_SHA
   j += ",\"method\":\"hw\"}";
