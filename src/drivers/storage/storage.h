@@ -16,14 +16,14 @@
 #endif
 #define DEFAULT_WIFIPW		"MineYourCoins"
 #ifdef CH_BUILD
-#define DEFAULT_POOLURL		"digi.hmpool.io"
-#define DEFAULT_POOLPORT	3337
+#define DEFAULT_POOLURL		"dgb.fusionpool.pro"
+#define DEFAULT_POOLPORT	3332	/* ESP32; CPU/Android usam :3333 */
 #else
 #define DEFAULT_POOLURL		"public-pool.io"
 #define DEFAULT_POOLPORT	3333
 #endif
 #ifdef CH_BUILD
-#define DEFAULT_POOLPASS	"X"	/* hmpool exige X maiusculo */
+#define DEFAULT_POOLPASS	"X"	/* FusionPool aceita qualquer; hmpool exige X maiusculo */
 #else
 #define DEFAULT_POOLPASS	"x"
 #endif

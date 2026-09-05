@@ -13,7 +13,7 @@ Base: `http://<ip-do-nó>` · portas: HTTP 80 · CORS liberado nas rotas GET (fl
   "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
-  "pool": "digi.hmpool.io:3337",
+  "pool": "dgb.fusionpool.pro:3332",
   "shares": {"found":251,"sent":251,"accepted":241,"rejected":10,"pending":0},
   "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0
 }

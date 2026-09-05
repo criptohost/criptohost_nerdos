@@ -68,11 +68,11 @@ Real captures from a mining ESP32 DevKit V1 (validation fleet: boards + Mac + se
 
 Every CriptoHost node speaks the same contract: it announces `_criptohost._tcp` over mDNS and answers `GET /api/status`. The result: **boards, PCs, servers and phones show up on the same Fleet page**, each with its own card, aggregates and remote actions (Home, Config, Restart).
 
-| Repository | What it mines | Typical hashrate |
-|---|---|---|
-| **criptohost_nerdos** (this one) | ESP32 (DevKit V1, S3, T-Display) | ~705 kH/s (DevKit V1) · ~300 kH/s (S3) |
-| [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux and macOS (CPU) | 20–165 MH/s |
-| [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = panel) | ~47 MH/s |
+| Repository | What it mines | Typical hashrate | Recommended DGB pool |
+|---|---|---|---|
+| **criptohost_nerdos** (this one) | ESP32 (DevKit V1, S3, T-Display) | ~705 kH/s (DevKit V1) · ~300 kH/s (S3) | `dgb.fusionpool.pro:3332` (default) |
+| [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux and macOS (CPU) | 20–165 MH/s | `dgb.fusionpool.pro:3333` |
+| [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = panel) | ~47 MH/s | `dgb.fusionpool.pro:3333` |
 
 ## 🔌 API
 
@@ -95,7 +95,7 @@ Routes: `/api/status` · `/api/config` · `/api/fleet` · `/api/peers` · `/api/
 
 ## ⛏️ Pools and coins
 
-The default is **DigiByte on hmpool** (`digi.hmpool.io:3337`, password `X`): low difficulty = frequently accepted shares = constant feedback for learning. Ready-made profiles in Config for BTC (lottery), BCH, XEC and PPC — details in [docs/POOLS.md](docs/POOLS.md). Want full independence? Run your own node+pool: [docs/SOLO-NODE.md](docs/SOLO-NODE.md).
+The default is **DigiByte on FusionPool** (`dgb.fusionpool.pro:3332`, password `X`; Brazil, no sign-up): low difficulty = frequently accepted shares = constant feedback for learning. For the CPU/Android siblings the recommendation is port `3333` (micro-miner tier) on the same pool. Ready-made profiles in Config for BTC (lottery), BCH, XEC and PPC — details in [docs/POOLS.md](docs/POOLS.md). Want full independence? Run your own node+pool: [docs/SOLO-NODE.md](docs/SOLO-NODE.md).
 
 ## ❓ Honest questions
 

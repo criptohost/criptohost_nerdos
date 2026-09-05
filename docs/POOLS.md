@@ -1,6 +1,6 @@
 # Pools — CriptoHost NerdOS
 
-> EN summary: profiles for SHA-256d lottery/PPLNS mining. DigiByte on hmpool is the default (low diff, frequent shares = better learning feedback). Availability of community pools changes — check before relying on one.
+> EN summary: profiles for SHA-256d lottery/PPLNS mining. DigiByte on FusionPool is the default (`:3332` for ESP32, `:3333` recommended for CPU/Android; low diff, frequent shares = better learning feedback). Availability of community pools changes — check before relying on one.
 
 An ESP32 speaks Stratum and SHA-256d. Any pool that accepts that protocol can be pointed at from **Config**. What it cannot do is compete with ASICs: BTC/BCH network difficulty makes a block from ~350 kH/s a lottery ticket. Prefer low-diff DGB if you want accepted shares on screen.
 
@@ -8,9 +8,9 @@ Profiles in the Config dropdown (verified 2026-08):
 
 | Coin | Pool | Endpoint | Model | Notes |
 |---|---|---|---|---|
-| DGB (default) | hmpool | `digi.hmpool.io:3337` | PPLNS low-diff | US region; best feedback on ESP32 |
+| DGB | hmpool | `digi.hmpool.io:3337` | PPLNS low-diff | US region; password `X` maiúsculo obrigatório |
 | DGB/BTC/BCH/PPC/BC2/BCH2 | BCMonster | `bcmonster.com` portas lottery: DGB `9996` · BTC `9999` (+NMC/FB merged grátis) · BCH `9994` · PPC `9995` · BC2 `9997` · BCH2 `9998` | PROP 1.5% (ou solo com senha `m=solo`) | Sem cadastro; diff 0.001 alvo 1 share/10s; dashboard `bcmonster.com/worker.html?address=WALLET`; estreia BC2/BCH2/NMC/FB no ecossistema. Validada ao vivo (share aceito em 1.1s) |
-| DGB | FusionPool | `dgb.fusionpool.pro:3333` | Híbrida 70/25/5 (taxa 2%) | BR; sem cadastro; porta 3333 = micro miners (20 kH/s–99 GH/s, vardiff 0.001+); 3334 Bitaxe · 3335/3336 ASICs; achador leva 70%, 25% dividido por shares×peso (10%/dia até 100%), 5% jackpot |
+| **DGB (default)** | FusionPool | `dgb.fusionpool.pro:3332` (ESP32) · `:3333` (CPU/Android) | Híbrida 70/25/5 (taxa 2%) | BR; sem cadastro; porta 3332 = default do NerdOS (validada: 705 kH/s, 97,7 % de shares aceitos, ver BENCH-SHA); 3333 = micro miners (20 kH/s–99 GH/s, vardiff 0.001+), recomendada para os irmãos CPU/Android; 3334 Bitaxe · 3335/3336 ASICs; achador leva 70%, 25% dividido por shares×peso (10%/dia até 100%), 5% jackpot |
 | DGB | letsmine.it | `us1.letsmine.it:3335` | solo, no signup | Brazil/US region; vardiff — try password `d=0.001` |
 | BTC | nerdminers.org | `pool.nerdminers.org:3333` | lottery | NerdMiner-class |
 | BTC | nerdminer.io | `pool.nerdminer.io:3333` | lottery | NerdMiner-class |

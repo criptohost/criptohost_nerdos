@@ -29,6 +29,7 @@ Pipeline SHA de registros diretos (M1-13, §4.3 nível 2): DevKit V1 sai de ~377
 - Ignore duplicate `mining.notify` (same job_id+ntime); pad submit nonce to 8 hex; hold a share back if the pool already has a new message waiting (avoids sending a job the pool just replaced).
 
 ### Changed
+- Pool default DGB: `dgb.fusionpool.pro:3332` (FusionPool, BR, sem cadastro) no lugar de `digi.hmpool.io:3337`; é onde a v0.3.0 foi validada. Para os irmãos CPU/Android a recomendação é `:3333`. Dropdown do Config, placeholders, READMEs, POOLS.md, API.md e mock atualizados.
 - Workers de mineração unificados em `minerWorker(IShaBackend&)`: HW fixado no core 1 (longe de Wi-Fi/Stratum), SW no core 0; lote de 2048 nonces por lock do motor. Removidas ~770 linhas de código HW SHA específico por alvo em `mining.cpp`.
 - CPU fixada em 240 MHz no boot (sdkconfig do Arduino default é 160).
 - Pool default DGB: `digi.hmpool.io:3337` (US) instead of `digi.hmpool.io`.
