@@ -68,7 +68,7 @@ nesse estado, então o número isolado por backend é o da linha de boot; o de 6
 ## Resultados
 
 Medido em 2026-09-04 num **ESP32-D0WD-V3 rev 3.1 (DevKit V1, CP2102)**, target `ch-devkit-v1`, pool
-`eu.digi.hmpool.io:3337`, Wi-Fi conectado, sem display. S3 e T-Display S3 compilam mas não havia placa: pendentes.
+`dgb.fusionpool.pro:3332` (FusionPool, DGB), Wi-Fi conectado, sem display. S3 e T-Display S3 compilam mas não havia placa: pendentes.
 
 ### Isolado por backend (linha de boot, motor sem concorrência, 8/8 vetores em todos)
 
@@ -119,7 +119,7 @@ o driver do IDF trava/destrava o motor e reinicializa o contexto a cada chamada.
 não 82: o nerdSHA256plus já satura a memória. Sem Wi-Fi o worker HW não recebe jobs; o isolado de boot é o número
 "sem Wi-Fi" por construção (roda antes das tasks).
 
-### Teste de campo (§10 passo 5) — 2 h em `eu.digi.hmpool.io:3337` por backend
+### Teste de campo (§10 passo 5) — 2 h em `dgb.fusionpool.pro:3332` por backend
 
 Não executado neste handoff (escopo: passos 1–4). A placa ficou minerando com `hw-pipeline`; contadores em
 `/api/status` (`shares_sent/accepted/rejected`) e eventos `reject` no dashboard dão o critério "zero invalid hash".

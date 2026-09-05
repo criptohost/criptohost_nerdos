@@ -98,7 +98,7 @@ GET /api/status →
   "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
-  "pool": "eu.digi.hmpool.io:3337",
+  "pool": "dgb.fusionpool.pro:3332",
   "shares": {"found":251,"sent":251,"accepted":241,"rejected":10,"pending":0},
   "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0
 }
@@ -202,7 +202,7 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 | M0-03 | Targets `ch-devkit-v1`, `ch-esp32s3`, `ch-tdisplay-s3` no platformio.ini | chore, ci | 1d | `pio run -e <target>` compila os 3 sem warnings críticos |
 | M0-04 | Migração SPIFFS → LittleFS | chore, area:web | 1d | Config sobrevive a reflash de firmware (partição preservada) |
 | M0-05 | Refatorar estado global para `state/monitor` (single source of truth) | chore, area:mining | 3d | Todas as métricas (shares, hashrate, temp, uptime) lidas de uma struct única thread-safe |
-| M0-06 | Validação de mineração nos 3 targets em `eu.digi.hmpool.io:3337` | test | 2d | 24 h contínuas por target; shares aceitos registrados; zero reboots |
+| M0-06 | Validação de mineração nos 3 targets em `dgb.fusionpool.pro:3332` | test | 2d | 24 h contínuas por target; shares aceitos registrados; zero reboots |
 | M0-07 | BRANDING.md + kit visual Cripto Host (paleta, logo, tipografia) | docs, area:brand | 2d | Paleta com base #0B041A documentada; assets em `/data/brand/`; zero assets de terceiros (O7) |
 | M0-08 | Release automatizada (tag → GitHub Release com `.bin` + changelog) | chore, ci | 1d | `git tag v*` publica release com os 3 binários nomeados |
 
@@ -340,7 +340,7 @@ build_flags = ${env.build_flags} -D BOARD_C3 -D NO_DISPLAY -D USE_HW_SHA -D SING
 2. Implementar `HwPipelineBackend` usando como referência **apenas** o SparkMiner (GPL) e o ESP32 Technical Reference Manual (cap. SHA Accelerator) — registrar a origem de cada técnica em comentários.
 3. Auto-teste no boot: 8 vetores conhecidos (header→hash esperado); backend só é ativado se passar; caso contrário fallback silencioso para baseline com log.
 4. `tools/bench/bench.py`: lê a serial por 60 s e reporta média/mínimo/máximo de kH/s por backend; rodar 3× cada, com e sem Wi-Fi conectado.
-5. Teste de campo: 2 h em `eu.digi.hmpool.io:3337` por backend; critério = **zero shares rejeitados por "invalid hash"** (rejeições por stale/duplicate são aceitáveis).
+5. Teste de campo: 2 h em `dgb.fusionpool.pro:3332` por backend; critério = **zero shares rejeitados por "invalid hash"** (rejeições por stale/duplicate são aceitáveis).
 6. Registrar tudo em `docs/BENCH-SHA.md` (tabela: backend × chip × Wi-Fi on/off × display on/off) e abrir o PR referenciando M1-13.
 
 **Sinais de decisão:**
