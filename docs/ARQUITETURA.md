@@ -1,6 +1,6 @@
 # Arquitetura — CriptoHost NerdOS
 
-> EN summary: fork of NerdMiner_v2 keeping its mining core intact; the CH layer (`src/ch/`, enabled by `-D CH_BUILD`) adds the local web dashboard, fleet API, mDNS discovery and browser OTA.
+> EN summary: fork of NerdMiner_v2 keeping its mining core intact; the CH layer (`src/ch/`, enabled by `-D CH_BUILD`) adds the local web dashboard, fleet API, mDNS discovery, a gossip-replicated peers list (`/api/peers`) and browser OTA.
 
 ## Visão por nó
 
@@ -17,7 +17,8 @@
 │    /api/config  GET/POST configuração (NVS/LittleFS)     │
 │    /api/restart /api/factory-reset                       │
 │    /api/ota     upload .bin (Update.h)                   │
-│    /api/fleet   peers mDNS · /api/bench · /api/events    │
+│    /api/fleet   peers mDNS+estáticos · /api/bench /events│
+│    /api/peers   lista replicada da frota (gossip)        │
 │    /ws          WebSocket push (5 s)                     │
 │   mDNS: _criptohost._tcp · config: LittleFS · UI: LittleFS│
 └─────────────────────────────────────────────────────────┘
@@ -43,6 +44,7 @@ Decisões:
 
 - **Camada CH isolada**: todo código novo vive em `src/ch/` sob `#ifdef CH_BUILD`. Os 30+ envs upstream continuam compilando sem nenhuma mudança funcional (M0-01).
 - **Sem servidor central**: qualquer nó abre `/fleet.html`; o próprio nó consulta mDNS (`/api/fleet`) e o browser busca `/api/status` de cada peer (CORS liberado nas rotas de leitura).
+- **Lista de peers replicada (gossip)**: `/peers.conf` + `/peers.rev` no LittleFS, mesmo documento em toda a frota (`ip[:porta] [token]` por linha). Editável em qualquer nó pela tela Fleet; a cada ~60 s o nó puxa a lista de 1 vizinho (round-robin, `ch_peers_sync_tick`) e a revisão maior vence — placas só puxam, agents CPU também empurram (alcançam VPS atrás de CGNAT). O `token` das linhas dá acesso a nós expostos na internet (agents exigem `X-CH-Token` de IPs públicos).
 - **Preços no browser, não no ESP32**: evita TLS + heap no firmware (risco §8 do escopo); falha de fetch não toca a mineração.
 - **Contadores de shares** (`ch_shares_sent/accepted/rejected`): únicas 3 variáveis adicionadas ao core, incrementos de 1 linha nos pontos de submit/accept/reject.
 - **Contrato `/api/*` é invariante** — é a regra de ouro para a migração ESP-IDF (M4) e frotas mistas.
