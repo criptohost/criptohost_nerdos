@@ -6,7 +6,7 @@
 
 | Tier | Placa | Target PlatformIO | Meta kH/s | Status | Papel |
 |---|---|---|---|---|---|
-| 1 | ESP32 DevKit V1 (D0WD) | `ch-devkit-v1` | ≥350 | ✅ suportado | **Recomendado** — custo mínimo, maior teto |
+| 1 | ESP32 DevKit V1 (D0WD) | `ch-devkit-v1` | ≥350 · **medido 705** (pipeline asm, v0.3.0) | ✅ suportado | **Recomendado** — custo mínimo, maior teto |
 | 1 | ESP32-S3 DevKitC (headless) | `ch-esp32s3` | ≥300 | ✅ suportado | Nó de frota moderno |
 | 1 | LilyGO T-Display S3 | `ch-tdisplay-s3` | ≥300 | ✅ suportado | Variante com display |
 | 2 | ESP32-C3 | `ch-esp32c3` | ≥250 | 🧪 experimental (M3) | Nó econômico / baixo consumo |

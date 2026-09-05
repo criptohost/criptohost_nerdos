@@ -89,6 +89,8 @@ void setup()
   while (1) HwShaTest();
 #endif
 
+  sha_backend_boot();  // selftest (8 vetores) + bench por backend + escolha hw/sw (§10 passo 3)
+
   // Setup the buttons
   #if defined(PIN_BUTTON_1) && !defined(PIN_BUTTON_2) //One button device
     button1.setPressMs(5*SECOND_MS);
@@ -170,7 +172,7 @@ void setup()
   TaskHandle_t minerTask1, minerTask2 = NULL;
   #ifdef HARDWARE_SHA265
     #if defined(CONFIG_IDF_TARGET_ESP32)
-    xTaskCreate(minerWorkerHw, "MinerHw-0", 3584, (void*)0, 3, &minerTask1); // Reduced for ESP32 classic
+    xTaskCreatePinnedToCore(minerWorkerHw, "MinerHw-0", 3584, (void*)0, 3, &minerTask1, 1); // core 1: sem Wi-Fi/Stratum (§4.3 técnica 4)
     //xTaskCreate(minerWorkerSw, "MinerSw-0", 5000, (void*)0, 1, &minerTask1); // Reduced for ESP32 classic
     #else
     xTaskCreate(minerWorkerHw, "MinerHw-0", 4096, (void*)0, 3, &minerTask1);
@@ -184,9 +186,9 @@ void setup()
   #endif
   esp_task_wdt_add(minerTask1);
 
-#if (SOC_CPU_CORES_NUM >= 2)
+#if (SOC_CPU_CORES_NUM >= 2) && !defined(CH_NO_SW_WORKER)  // CH_NO_SW_WORKER: experimento §10 — só o pipeline HW
   #if defined(CONFIG_IDF_TARGET_ESP32)
-  xTaskCreate(minerWorkerSw, "MinerSw-1", 5000, (void*)1, 1, &minerTask2); // Reduced for ESP32 classic
+  xTaskCreatePinnedToCore(minerWorkerSw, "MinerSw-1", 5000, (void*)1, 1, &minerTask2, 0); // core 0, divide com Wi-Fi/Stratum
   #else
   xTaskCreate(minerWorkerSw, "MinerSw-1", 6000, (void*)1, 1, &minerTask2);
   #endif

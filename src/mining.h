@@ -16,6 +16,9 @@
 
 #define TARGET_BUFFER_SIZE 64
 
+#include "mining/sha_backend.h"
+extern volatile uint32_t ch_hw_mismatch;
+
 void runMonitor(void *name);
 
 void runStratumWorker(void *name);

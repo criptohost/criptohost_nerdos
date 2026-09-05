@@ -261,17 +261,16 @@ static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t 
 // ---- /api/bench (M1-05) ----
 static String benchJson()
 {
-  // Bench SW: nerdSHA256plus (midstate + double hash) por 200 ms
+  // kH/s por backend medidos no boot (sha_backend_boot) + hashrate vivo. Chaves antigas (sw_khs/live_khs/method) mantidas.
   extern uint32_t elapsedKHs;
-  uint8_t header[80] = {0}, hash[32];
-  nerdSHA256_context mid;
-  nerd_mids(mid.digest, header);
-  uint32_t n = 0, t0 = millis();
-  while (millis() - t0 < 200) {
-    for (int i = 0; i < 100; i++) { header[76] = n; nerd_sha256d(&mid, header + 64, hash); n++; }
-  }
-  double swKhs = (double)n / (millis() - t0);
-  String j = "{\"sw_khs\":" + String(swKhs, 1);
+  const ShaBench& b = sha_bench;
+  auto entry = [](const ShaBenchEntry& e) {
+    return "{\"khs\":" + String(e.khs, 1) + ",\"ok\":" + (e.ok ? "true" : "false") + "}";
+  };
+  String j = "{\"sw_khs\":" + String(b.sw.khs, 1);
+  j += ",\"backends\":{\"sw\":" + entry(b.sw) + ",\"hw-baseline\":" + entry(b.baseline) + ",\"hw-pipeline\":" + entry(b.pipeline) + "}";
+  j += ",\"hw_backend\":\"" + String(b.hw ? b.hw->name() : "none") + "\"";
+  j += ",\"hw_mismatch\":" + String((unsigned long)ch_hw_mismatch);
   j += ",\"live_khs\":" + String((double)elapsedKHs, 1);
 #ifdef USE_HW_SHA
   j += ",\"method\":\"hw\"}";

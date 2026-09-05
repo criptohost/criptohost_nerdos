@@ -13,7 +13,7 @@ Base: `http://<ip-do-nó>` · portas: HTTP 80 · CORS liberado nas rotas GET (fl
   "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
-  "pool": "digi.hmpool.io:3337",
+  "pool": "dgb.fusionpool.pro:3332",
   "shares": {"found":251,"sent":251,"accepted":241,"rejected":10,"pending":0},
   "best_difficulty": 7.1642, "templates": 2307, "valid_blocks": 0
 }
@@ -70,7 +70,7 @@ Formato: uma linha por nó, `ip[:porta] [token]` (porta default 80; `#` comenta;
 
 ## GET /api/bench
 
-`{"sw_khs": 123.4, "live_khs": 356.2, "method": "hw|sw"}` — benchmark SW síncrono (200 ms) + hashrate ao vivo.
+`{"sw_khs": 41.1, "backends": {"sw": {"khs": 41.1, "ok": true}, "hw-baseline": {"khs": 13.6, "ok": true}, "hw-pipeline": {"khs": 666.7, "ok": true}}, "hw_backend": "hw-pipeline", "hw_mismatch": 0, "live_khs": 705.0, "method": "hw|sw"}` — kH/s por backend medidos no boot (motor sem concorrência), `ok` = passou nos vetores/cross-check, `hw_backend` = escolhido para o core 1, `hw_mismatch` = candidatos HW reprovados na conferência em software, `live_khs` = hashrate ao vivo. Chaves `sw_khs`/`live_khs`/`method` mantidas da v0.2.
 
 ## WS /ws
 

@@ -22,11 +22,11 @@
 
 O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ESP32. Ele conecta a placa numa pool real, minera SHA-256d de verdade e entrega tudo num **dashboard web local** — sem app, sem nuvem, sem cadastro.
 
-> ⚠️ **Enquadramento honesto**: isto é um projeto de **hobby e educação**. Um ESP32 faz ~350 kH/s; um ASIC faz 200 TH/s — 500 milhões de vezes mais. Você não vai enriquecer: vai **aprender** como Stratum, dificuldade, shares e blocos funcionam, vendo tudo acontecer ao vivo. O retorno esperado é ~zero, e dizemos isso com orgulho.
+> ⚠️ **Enquadramento honesto**: isto é um projeto de **hobby e educação**. Um ESP32 DevKit V1 faz ~700 kH/s; um ASIC faz 200 TH/s — 300 milhões de vezes mais. Você não vai enriquecer: vai **aprender** como Stratum, dificuldade, shares e blocos funcionam, vendo tudo acontecer ao vivo. O retorno esperado é ~zero, e dizemos isso com orgulho.
 
 ## ✨ O que ele faz
 
-- ⛏️ **Minera de verdade** — SHA-256d com acelerador de hardware do ESP32 + midstate caching, Stratum V1 completo
+- ⛏️ **Minera de verdade** — SHA-256d no acelerador de hardware do ESP32 com pipeline de registros em asm (~705 kH/s sustentado no DevKit V1, [bench](docs/BENCH-SHA.md)), Stratum V1 completo
 - 📊 **Dashboard ao vivo** — hashrate com anel de progresso, shares, eficiência, best difficulty, temperatura, Wi-Fi, preços de mercado, log de conexão
 - 🕸️ **Fleet peer-to-peer** — cada nó descobre os vizinhos via mDNS; qualquer placa mostra a frota inteira, sem servidor central
 - 🔁 **Lista de peers replicada** — para nós fora do alcance do mDNS (VPS, Android): edite a lista na tela Fleet de **qualquer** nó — placa incluída — e todos os outros sincronizam sozinhos em ~1 min (revisão mais nova vence)
@@ -35,7 +35,7 @@ O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ES
 - 🛰️ **Órbita da rede** — mapa vivo da frota no Fleet: seus nós conectados em anéis ao redor do nó atual
 - 🔭 **Enxerga mineradores de terceiros** — Bitaxe, NerdQAxe/NerdOctaxe (família AxeOS) e ASICs Antminer (stock ou Braiins OS, via API CGMiner) na mesma rede aparecem em cartão âmbar com hashrate, temperatura, pool e versão (descoberta feita pelos nós CPU/CH Agent)
 - 🌐 **Provisionamento fácil** — primeiro boot abre o portal Wi-Fi `CriptoHostAP`
-- 🪙 **Multi-moeda SHA-256d** — DigiByte (default, shares frequentes), BTC, BCH, XEC, PPC, BC2, BCH2 — e Namecoin + Fractal Bitcoin de graça via merged mining na BCMonster
+- 🪙 **Multi-moeda SHA-256d** — DigiByte (default, shares frequentes), BTC, BCH, XEC, PPC, BC2, BCH2 (FusionPool com porta por aparelho, ou BCMonster) — e Namecoin + Fractal Bitcoin de graça via merged mining na BCMonster
 
 ## 🖼️ Telas
 
@@ -68,11 +68,11 @@ Capturas reais de um ESP32 DevKit V1 minerando (frota de validação: placas + M
 
 Todo nó CriptoHost fala o mesmo contrato: anuncia `_criptohost._tcp` via mDNS e responde `GET /api/status`. Resultado: **placas, PCs, servidores e celulares aparecem no mesmo Fleet**, cada um com seu card, agregados e ações remotas (Home, Config, Restart).
 
-| Repositório | O que minera | Hashrate típico |
-|---|---|---|
-| **criptohost_nerdos** (este) | ESP32 (DevKit V1, S3, T-Display) | ~350 kH/s |
-| [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux e macOS (CPU) | 20–165 MH/s |
-| [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = painel) | ~47 MH/s |
+| Repositório | O que minera | Hashrate típico | Pool DGB recomendada |
+|---|---|---|---|
+| **criptohost_nerdos** (este) | ESP32 (DevKit V1, S3, T-Display) | ~705 kH/s (DevKit V1) · ~300 kH/s (S3) | `dgb.fusionpool.pro:3332` (default) |
+| [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer) | Windows, Linux e macOS (CPU) | 20–165 MH/s | `dgb.fusionpool.pro:3333` |
+| [criptohost_mobile](https://github.com/criptohost/criptohost_mobile) | Android via Termux (iOS = painel) | ~47 MH/s | `dgb.fusionpool.pro:3333` |
 
 ## 🔌 API
 
@@ -95,7 +95,7 @@ Rotas: `/api/status` · `/api/config` · `/api/fleet` · `/api/peers` · `/api/e
 
 ## ⛏️ Pools e moedas
 
-O default é **DigiByte na hmpool** (`digi.hmpool.io:3337`, password `X`): dificuldade baixa = shares aceitos com frequência = feedback constante para aprender. Perfis prontos no Config para BTC (lottery), BCH, XEC e PPC — detalhes e status de cada pool em [docs/POOLS.md](docs/POOLS.md). Quer independência total? Monte seu próprio nó+pool: [docs/SOLO-NODE.md](docs/SOLO-NODE.md).
+O default é **DigiByte na FusionPool** (`dgb.fusionpool.pro:3332`, password `X`; BR, sem cadastro): dificuldade baixa = shares aceitos com frequência = feedback constante para aprender. Para os irmãos CPU/Android a recomendação é a porta `3333` (tier micro miners) da mesma pool. Perfis prontos no Config para BTC (lottery), BCH, XEC e PPC — detalhes e status de cada pool em [docs/POOLS.md](docs/POOLS.md). Quer independência total? Monte seu próprio nó+pool: [docs/SOLO-NODE.md](docs/SOLO-NODE.md).
 
 ## ❓ Perguntas honestas
 
