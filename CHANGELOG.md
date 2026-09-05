@@ -14,6 +14,7 @@ Pipeline SHA de registros diretos (M1-13, §4.3 nível 2): DevKit V1 sai de ~377
 - Auto-teste no boot em dois estágios: 8 vetores conhecidos por backend + cross-check de lote do pipeline contra mbedTLS; reprovação cai para baseline → sw com log.
 - Conferência em software de cada candidato HW antes do submit; divergência vira evento `test` e conta em `hw_mismatch` no `/api/bench`.
 - `/api/bench` com kH/s por backend medidos no boot; linha serial `[BENCH] khs=… hw=… sw=…` 1×/s; `tools/bench/bench.py` (média/mín/máx por N corridas); `test/host/run.sh` (SwBackend nativo contra os vetores).
+- Perfil BCH2 na FusionPool (`bch2.fusionpool.pro`): `:4442` para ESP32/Android, `:4443` para CPU ≥100 MH/s; dashboard reconhece o host como BCH2 e linka o painel certo. Tabela de tiers por aparelho em `docs/POOLS.md`.
 - Planejamento v2.1 em `docs/PLANEJAMENTO-ESCOPO.md` (§4.3 em dois níveis, O1b, M1-13, §10 handoff).
 - Dedicated error log (`GET /api/errors`, WS `errors`): up to 48 rejects/stratum failures, kept separately so they are not evicted by the 24-event live log.
 - Per-board identity: setup AP `CriptoHostNerdOS-XXXX` and DHCP/mDNS hostname include a MAC suffix so a second unit can join the same LAN without turning the first one off.

@@ -35,7 +35,7 @@ O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ES
 - 🛰️ **Órbita da rede** — mapa vivo da frota no Fleet: seus nós conectados em anéis ao redor do nó atual
 - 🔭 **Enxerga mineradores de terceiros** — Bitaxe, NerdQAxe/NerdOctaxe (família AxeOS) e ASICs Antminer (stock ou Braiins OS, via API CGMiner) na mesma rede aparecem em cartão âmbar com hashrate, temperatura, pool e versão (descoberta feita pelos nós CPU/CH Agent)
 - 🌐 **Provisionamento fácil** — primeiro boot abre o portal Wi-Fi `CriptoHostAP`
-- 🪙 **Multi-moeda SHA-256d** — DigiByte (default, shares frequentes), BTC, BCH, XEC, PPC, BC2, BCH2 — e Namecoin + Fractal Bitcoin de graça via merged mining na BCMonster
+- 🪙 **Multi-moeda SHA-256d** — DigiByte (default, shares frequentes), BTC, BCH, XEC, PPC, BC2, BCH2 (FusionPool com porta por aparelho, ou BCMonster) — e Namecoin + Fractal Bitcoin de graça via merged mining na BCMonster
 
 ## 🖼️ Telas
 

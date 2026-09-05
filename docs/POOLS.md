@@ -11,6 +11,7 @@ Profiles in the Config dropdown (verified 2026-08):
 | DGB | hmpool | `digi.hmpool.io:3337` | PPLNS low-diff | US region; password `X` maiúsculo obrigatório |
 | DGB/BTC/BCH/PPC/BC2/BCH2 | BCMonster | `bcmonster.com` portas lottery: DGB `9996` · BTC `9999` (+NMC/FB merged grátis) · BCH `9994` · PPC `9995` · BC2 `9997` · BCH2 `9998` | PROP 1.5% (ou solo com senha `m=solo`) | Sem cadastro; diff 0.001 alvo 1 share/10s; dashboard `bcmonster.com/worker.html?address=WALLET`; estreia BC2/BCH2/NMC/FB no ecossistema. Validada ao vivo (share aceito em 1.1s) |
 | **DGB (default)** | FusionPool | `dgb.fusionpool.pro:3332` (ESP32) · `:3333` (CPU/Android) | Híbrida 70/25/5 (taxa 2%) | BR; sem cadastro; porta 3332 = default do NerdOS (validada: 705 kH/s, 97,7 % de shares aceitos, ver BENCH-SHA); 3333 = micro miners (20 kH/s–99 GH/s, vardiff 0.001+), recomendada para os irmãos CPU/Android; 3334 Bitaxe · 3335/3336 ASICs; achador leva 70%, 25% dividido por shares×peso (10%/dia até 100%), 5% jackpot |
+| BCH2 | FusionPool | `bch2.fusionpool.pro` — `4442` ESP32/Android · `4443` CPU ≥100 MH/s (tabela abaixo) | Híbrida 70/25/5 (taxa 2%) | BR; sem cadastro; password `x`; user `WALLET.WORKER`; carteira em `wallet.bch2.org`; payout automático a partir de 1 BCH2 |
 | DGB | letsmine.it | `us1.letsmine.it:3335` | solo, no signup | Brazil/US region; vardiff — try password `d=0.001` |
 | BTC | nerdminers.org | `pool.nerdminers.org:3333` | lottery | NerdMiner-class |
 | BTC | nerdminer.io | `pool.nerdminer.io:3333` | lottery | NerdMiner-class |
@@ -24,6 +25,20 @@ Profiles in the Config dropdown (verified 2026-08):
 | PPC | letsmine.it | `us1.letsmine.it:3347` | solo | Peercoin |
 | XEC | mining-dutch | `xec.mining-dutch.nl:9998` | PPLNS | Requires an account |
 | BCH | mining-dutch | `bch.mining-dutch.nl:9985` | PPLNS | Requires an account |
+
+### FusionPool BCH2 — porta por aparelho
+
+Tiers publicados em [bch2.fusionpool.pro](https://bch2.fusionpool.pro/). A porta define a dificuldade inicial e a faixa de vardiff; escolha pela taxa de hash real do aparelho.
+
+| Porta | Tier | Faixa de hashrate | Diff inicial | Vardiff | Recomendado para |
+|---|---|---|---|---|---|
+| **4442** | Ultra Low | 20 kH/s – 99,99 MH/s | 0.01 | 0.001 – 0.1 | **ESP32 NerdOS** (~705 kH/s), **Android** (~47 MH/s), CPU abaixo de 100 MH/s |
+| **4443** | Low Hash | 100 MH/s – 299,99 GH/s | 16 | 1 – 128 | **CPU** com 100 MH/s ou mais (desktops multi-core do `criptohost_cpuminer`) |
+| 4444 | Home Miners | 300 GH/s – 2,99 TH/s | 1 024 | 256 – 2 048 | Bitaxe / ASIC pequeno |
+| 4445 | ASIC Miners | 3 – 19,99 TH/s | 2 048 | 1 024 – 4 096 | S9, LuckyMiner |
+| 4446–4448 | Pro / High / Ultra | 20 TH/s+ | 4 096 | 2 048+ (auto) | ASICs grandes |
+
+Um ESP32 na 4443 (diff 16) levaria horas por share; um CPU de 165 MH/s na 4442 bate no teto de vardiff 0.1 e desperdiça shares. Por isso a recomendação por aparelho, não uma porta única.
 
 LetsMine also lists other SHA-256 coins (BC2, MYT, BTCS, XRO, BCH2). They are valid Stratum targets if you type host+port by hand; they are omitted from the dropdown and from Home prices because CoinGecko coverage is weak.
 

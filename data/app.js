@@ -83,6 +83,7 @@
       if (port === 9998 || port === 8888 || port === 8889) return "BCH2";
       return "BTC";
     }
+    if (host.indexOf("bch2.") === 0) return "BCH2";  // bch2.fusionpool.pro antes do teste genérico de fusionpool
     if (host.indexOf("digi") >= 0 || host.indexOf("hmpool") >= 0 || host.indexOf("fusionpool") >= 0 || host.indexOf("dgb.") === 0) return "DGB";
     if (host.indexOf("xec") >= 0) return "XEC";
     if (host.indexOf("bch") >= 0) return "BCH";
@@ -119,7 +120,7 @@
       return addr ? base + "/miner.html?address=" + encodeURIComponent(addr) : base + "/miner.html";
     }
     if (host.indexOf("fusionpool") >= 0)
-      return "https://fusionpool.pro/";
+      return host.indexOf("bch2.") === 0 ? "https://bch2.fusionpool.pro/" : "https://fusionpool.pro/";
     if (host.indexOf("bcmonster") >= 0)
       return addr ? "https://bcmonster.com/worker.html?address=" + encodeURIComponent(addr) : "https://bcmonster.com";
     if (host.indexOf("nerdminers.org") >= 0)
