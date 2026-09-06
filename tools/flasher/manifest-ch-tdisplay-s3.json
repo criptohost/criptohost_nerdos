@@ -1,6 +1,6 @@
 {
   "name": "CriptoHost NerdOS — LilyGO T-Display S3",
-  "version": "v0.1.0-alpha",
+  "version": "v0.3.0-alpha",
   "new_install_prompt_erase": true,
   "builds": [
     {

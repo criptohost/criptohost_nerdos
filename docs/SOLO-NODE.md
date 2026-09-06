@@ -45,7 +45,7 @@ volumes:
 }
 ```
 
-`mindiff` baixo é essencial: ESP32 a ~350 kH/s precisa de dificuldade mínima para submeter shares com frequência.
+`mindiff` baixo é essencial: ESP32 a ~700 kH/s precisa de dificuldade mínima para submeter shares com frequência.
 
 ## 3. Subir e sincronizar
 

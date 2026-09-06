@@ -35,7 +35,7 @@ os "zeros" do bloco 2 a partir da 2ª iteração. Os vetores passam porque acert
 
 `sha_backend_boot()` roda os 8 vetores de `test/sha_vectors.json` (gerados por `test/test_sha_vectors.py`,
 todos com hash terminando em 16 bits zero) em cada backend, mede ~250 ms de kH/s isolado e escolhe o backend
-do worker HW: `SHA_BACKEND` (`"baseline"` default; `"pipeline"` opt-in, ligado no env `ch-devkit-v1`; `"sw"`) só é honrado se passar nos vetores;
+do worker HW: `SHA_BACKEND` (`"pipeline"` no env `ch-devkit-v1` desde a v0.3.0; `"baseline"` é o fallback do código; `"sw"`) só é honrado se passar nos vetores;
 senão cai para `hw-baseline` → `sw`, com log no serial e no `/api/bench`.
 
 ```
@@ -142,7 +142,7 @@ Referências herdadas (histórico git do NerdMiner e docs do SparkMiner, não re
 |---|---|
 | SparkMiner README (`sha256_pipelined_v3`, ESP32 clássico, CYD) | ~715–725 kH/s |
 | NerdMiner `228ff88` "esp32s3 HW sha256 speed-up" | 252 kH/s (S3, HW) |
-| README deste repo (D0WD, HW + SW nos dois cores) | ~350 kH/s |
+| README deste repo antes da v0.3.0 (D0WD, worker HW do NerdMiner + SW) | ~350 kH/s (medido na `main`: ~377) |
 
 ## Decisão (§10)
 
@@ -158,8 +158,9 @@ candidato antes do submit (hash errado nunca vira share). Manter o worker `sw` n
 Evidência de campo parcial da 1ª rodada (dashboard, 1 h 16 min em `dgb.fusionpool.pro:3332`, laço C):
 176 shares enviados, 174 aceitos, 2 rejeitados (98,9 %); motivo dos 2 saiu do ring buffer antes da leitura.
 
-Próximo passo indicado pelo §10 é "M3-07", que não existe na lista do M3 (termina em M3-06, CI + regressão de
-hashrate). Assumido M3-06: o `bench.py` desta branch é o candidato a benchmark automático.
+Próximo passo indicado pelo §10 é **M3-07 — Pesquisa 1 MH/s no ESP32 clássico** (assembly do hot loop, unrolling,
+tuning de barramento; ≥900 kH/s = sucesso). O laço em asm desta branch é o ponto de partida; o `bench.py` cobre
+também o M3-06 (regressão de hashrate no CI).
 
 Para passar dos 705: o gap restante para o NMMiner (~1000) é o limite de 3 compressões/nonce do D0WD (sem midstate
 gravável) mais o barramento DPORT; o SparkMiner para nos mesmos ~715–725. Só assembly mais agressivo

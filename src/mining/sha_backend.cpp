@@ -18,7 +18,7 @@
 #define IRAM_ATTR
 #endif
 #ifndef SHA_BACKEND
-#define SHA_BACKEND "baseline"  // M1-13: "pipeline" é opt-in por env (decisão 2026-09-04: 470 kH/s sustentado, faixa 450–700 do §10)
+#define SHA_BACKEND "baseline"  // fallback conservador; o env ch-devkit-v1 liga "pipeline" (default desde v0.3.0: 705 kH/s sustentado, ver docs/BENCH-SHA.md)
 #endif
 
 // ---------------- SwBackend: nerdSHA256plus (midstate + bake) — caminho original do NerdMiner ----------------

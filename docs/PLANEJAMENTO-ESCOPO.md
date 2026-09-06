@@ -48,7 +48,7 @@ O Ha•Kou NerdOS serve **exclusivamente como referência de escopo funcional** 
 5. **OTA Update**: upload de `.bin` via web, config preservada, barra de progresso, proteção contra desconexão.
 6. **Provisionamento**: captive portal (`CriptoHostNerdOS`) no primeiro boot.
 7. **Ações do dispositivo**: Restart, Factory Reset.
-8. **Multi-moeda SHA-256d**: DGB (default, hmpool), BTC (pool.nerdminers.org / pool.nerdminer.io), XEC e BCH como perfis opcionais.
+8. **Multi-moeda SHA-256d**: DGB (default, FusionPool `:3332`), BTC (pool.nerdminers.org / pool.nerdminer.io), XEC e BCH como perfis opcionais.
 9. **Placas**: Tier 1 — ESP32 DevKit V1 e ESP32-S3 (com e sem display); Tier 2 — C3/C6; Tier 3 — P4+C6 (experimental).
 10. **Identidade visual Cripto Host** em todas as telas, flasher e docs (O7).
 

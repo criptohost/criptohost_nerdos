@@ -2,7 +2,7 @@
 
 > EN summary: profiles for SHA-256d lottery/PPLNS mining. DigiByte on FusionPool is the default (`:3332` for ESP32, `:3333` recommended for CPU/Android; low diff, frequent shares = better learning feedback). Availability of community pools changes — check before relying on one.
 
-An ESP32 speaks Stratum and SHA-256d. Any pool that accepts that protocol can be pointed at from **Config**. What it cannot do is compete with ASICs: BTC/BCH network difficulty makes a block from ~350 kH/s a lottery ticket. Prefer low-diff DGB if you want accepted shares on screen.
+An ESP32 speaks Stratum and SHA-256d. Any pool that accepts that protocol can be pointed at from **Config**. What it cannot do is compete with ASICs: BTC/BCH network difficulty makes a block from ~700 kH/s a lottery ticket. Prefer low-diff DGB if you want accepted shares on screen.
 
 Profiles in the Config dropdown (verified 2026-08):
 
@@ -55,7 +55,7 @@ The captive portal only asks for the home network. After Save, the setup AP clos
 
 ## Expectativa honesta
 
-Um ESP32 (~350 kH/s) em lottery mining de BTC/BCH tem chance ~zero de bloco. Para feedback frequente de shares aceitos, use o perfil default DGB low-diff. O objetivo é aprender Stratum/SHA-256d/dificuldade — não renda.
+Um ESP32 (~700 kH/s no DevKit V1) em lottery mining de BTC/BCH tem chance ~zero de bloco. Para feedback frequente de shares aceitos, use o perfil default DGB low-diff. O objetivo é aprender Stratum/SHA-256d/dificuldade — não renda.
 
 ## Nó próprio
 

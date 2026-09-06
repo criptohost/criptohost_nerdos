@@ -7,8 +7,9 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                  CriptoHost NerdOS (nó)                  │
-│  Miner Task (Core0)  Miner Task (Core1)  Stratum Task    │
-│  HW SHA + midstate ──┴── nerdSHA256plus  subscribe/auth  │
+│  MinerSw (Core0)     MinerHw (Core1)     Stratum Task    │
+│  sw backend ──┴── hw-pipeline (asm)      subscribe/auth  │
+│        IShaBackend (src/mining/sha_backend.*)            │
 │         └──────── globais de estado ─────── notify/submit│
 │                        │                                 │
 │   Web Server (ESPAsyncWebServer, src/ch/ch_web.cpp)      │

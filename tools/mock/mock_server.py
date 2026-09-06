@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """Mock do firmware CriptoHost NerdOS — serve data/ + /api/* fake para validar a UI sem placa.
 
-Uso:  python3 tools/mock/mock_server.py [porta]   (default 8091)
+Uso:  python3 tools/mock/mock_server.py [porta] [worker] [hardware] [khs]   (default 8091)
+      PROXY=192.168.1.104 python3 tools/mock/mock_server.py 8091
+        → serve o data/ local mas repassa /api/* para a placa real: testa/printa a UI nova
+          com dados reais sem regravar a LittleFS.
 """
-import json, os, random, sys, time
+import json, os, random, sys, time, urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8091
 WORKER = sys.argv[2] if len(sys.argv) > 2 else "CH-DevKit-01"
 HW = sys.argv[3] if len(sys.argv) > 3 else "ESP32 DevKit V1"
-BASE_KHS = float(sys.argv[4]) if len(sys.argv) > 4 else 356.2
+BASE_KHS = float(sys.argv[4]) if len(sys.argv) > 4 else 705.0
+PROXY = os.environ.get("PROXY")  # IP de uma placa real
 # instância principal (8091) enxerga peers fake nas portas 8092/8093
-PEERS = [{"worker": "CH-S3-02", "fw": "v0.1.0-alpha", "hardware": "ESP32-S3", "ip": "localhost", "port": 8092},
-         {"worker": "CH-TDS3-03", "fw": "v0.1.0-alpha", "hardware": "LilyGO T-Display S3", "ip": "localhost", "port": 8093}] if PORT == 8091 else []
+PEERS = [{"worker": "CH-S3-02", "fw": "v0.3.0-alpha", "hardware": "ESP32-S3", "ip": "localhost", "port": 8092},
+         {"worker": "CH-TDS3-03", "fw": "v0.3.0-alpha", "hardware": "LilyGO T-Display S3", "ip": "localhost", "port": 8093}] if PORT == 8091 else []
 T0 = time.time()
 
 def status():
@@ -23,7 +27,7 @@ def status():
     return {
         "worker": WORKER, "hostname": WORKER.lower().replace(".", "-"), "ip": "192.168.1.%d" % (60 + PORT % 10),
         "mac": "24:6F:28:00:%02X:%02X" % ((PORT // 256) % 256, PORT % 256),
-        "hardware": HW, "fw": "v0.1.0-alpha",
+        "hardware": HW, "fw": "v0.3.0-alpha",
         "status": "mining", "hashrate_khs": BASE_KHS + random.uniform(-8, 8),
         "temp_c": 53.0 + random.uniform(-2, 2), "rssi_dbm": -52,
         "uptime_s": up, "pool": "dgb.fusionpool.pro:3332",
@@ -65,6 +69,15 @@ class H(SimpleHTTPRequestHandler):
         self.wfile.write(b)
 
     def do_GET(self):
+        if PROXY and self.path.startswith("/api/"):
+            try:
+                with urllib.request.urlopen(f"http://{PROXY}{self.path}", timeout=30) as r:
+                    body = r.read(); self.send_response(r.status)
+                    self.send_header("Content-Type", r.headers.get("Content-Type", "application/json"))
+                    self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+            except Exception as e:
+                self.send_error(502, str(e))
+            return
         if self.path == "/api/status": return self._json(status())
         if self.path == "/api/events": return self._json(EVENTS)
         if self.path == "/api/errors": return self._json(ERRORS)

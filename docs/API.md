@@ -10,7 +10,7 @@ Base: `http://<ip-do-nó>` · portas: HTTP 80 · CORS liberado nas rotas GET (fl
 {
   "worker": "CH-DevKit-01", "hostname": "ch-devkit-01-a3f2", "ip": "192.168.1.66",
   "mac": "24:6F:28:A3:F2:B1",
-  "hardware": "ESP32 DevKit V1", "fw": "v0.1.0-alpha",
+  "hardware": "ESP32 DevKit V1", "fw": "v0.3.0-alpha",
   "status": "mining", "hashrate_khs": 356.2,
   "temp_c": 53.0, "rssi_dbm": -52, "uptime_s": 33743,
   "pool": "dgb.fusionpool.pro:3332",

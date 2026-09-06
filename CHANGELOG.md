@@ -4,6 +4,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/) · versionamento 
 
 ## [Unreleased]
 
+### Fixed
+- Fleet: um peer sem `hashrate_khs` (agent parcial, ASIC, nó com 401) derrubava o render da página inteira (`TypeError` em `fmtHash`) — ficava em "Scanning…" com 0 dispositivos. Agora conta como 0 kH/s.
+- Config: o dropdown "Pool profile" mostrava "custom" mesmo quando a config batia com um perfil; agora seleciona o perfil correspondente ao carregar.
+
+### Changed
+- Anel do Home: alvo do DevKit V1 sobe de 350 para 700 kH/s (O1b atingido na v0.3.0); S3 300 e C3/C6 250 inalterados.
+- Docs revisadas para a v0.3.0: hashrate (~700 kH/s) em POOLS, SOLO-NODE e ajuda do Config; arquitetura com `IShaBackend`; exemplos da API com `fw v0.3.0-alpha`; manifests do web flasher em `v0.3.0-alpha` e README do flasher usando o `*-full.bin` da Release; capturas de tela do dashboard refeitas com a placa real a ~734 kH/s.
+- `tools/mock/mock_server.py`: modo `PROXY=<ip>` serve o `data/` local repassando `/api/*` para uma placa real (valida/printa a UI nova sem regravar a LittleFS); defaults do mock em `v0.3.0-alpha` / 705 kH/s.
+
 ## [v0.3.0-alpha] — 2026-09-04
 
 Pipeline SHA de registros diretos (M1-13, §4.3 nível 2): DevKit V1 sai de ~377 para **~705 kH/s sustentado**. Relatório completo em [docs/BENCH-SHA.md](docs/BENCH-SHA.md).

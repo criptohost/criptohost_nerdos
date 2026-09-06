@@ -93,7 +93,7 @@
 
   var miningSym = "DGB";
 
-  // Média esperada por placa (escopo O1): DevKit ≥350, S3 ≥300, C3/C6 ≥250 kH/s.
+  // Alvo por placa: DevKit 700 (O1b atingido na v0.3.0, pipeline asm), S3 ≥300, C3/C6 ≥250 kH/s.
   // Nó CPU não tem tabela — o alvo é o pico da própria sessão.
   var sessionPeakKhs = 0;
   function hashTargetKhs(st) {
@@ -104,7 +104,7 @@
     var hw = st.hardware || "";
     if (/C3|C6/i.test(hw)) return 250;
     if (/S3/i.test(hw)) return 300;
-    return 350;
+    return 700;
   }
 
   var cfgWallet = "";
@@ -160,6 +160,7 @@
 
   // Escala automática: contrato fala kH/s; exibição sobe de unidade no milhar
   function fmtHash(khs) {
+    khs = +khs || 0;  // peer sem hashrate_khs (agent/ASIC parcial) derrubava o render do Fleet inteiro
     if (khs >= 1e9) return { v: (khs / 1e9).toFixed(2), u: "TH/s" };
     if (khs >= 1e6) return { v: (khs / 1e6).toFixed(2), u: "GH/s" };
     if (khs >= 1e3) return { v: (khs / 1e3).toFixed(2), u: "MH/s" };
@@ -690,8 +691,11 @@
           var opts = { signal: AbortSignal.timeout(4000) };
           if (p.token) opts.headers = { "X-CH-Token": p.token };  // nó exposto (VPS)
           return fetch("http://" + p.ip + ":" + p.port + "/api/status", opts)
-            .then(function (r) { return r.json(); })
-            .then(function (st) { return { st: st, ip: (p.port && p.port != 80) ? p.ip + ":" + p.port : p.ip, tok: p.token || "" }; })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (st) {
+              if (!st || !st.worker) return null;  // 401/JSON de erro não vira nó "undefined"
+              return { st: st, ip: (p.port && p.port != 80) ? p.ip + ":" + p.port : p.ip, tok: p.token || "" };
+            })
             .catch(function () { return null; });
         })).then(function (res) {
           var fresh = {};
@@ -709,7 +713,10 @@
             }
             if (k !== fleet.self.worker) nodes.push({ st: s.st, ip: s.ip, tok: s.tok });
           });
+          // self fica em nodes[0] (centro da órbita); só os peers são ordenados por nome
+          var selfNode = nodes.shift();
           nodes.sort(function (a, b) { return String(a.st.worker).localeCompare(String(b.st.worker)); });
+          nodes.unshift(selfNode);
           // mineradores de terceiros (Bitaxe/NerdQAxe…) já vêm com status completo do agent
           var frn = (fleet.foreign || []).map(function (f) {
             return { st: f, ip: (f.port && f.port != 80) ? f.ip + ":" + f.port : f.ip };
@@ -719,7 +726,7 @@
           renderOrbit(all);
           var live = all.filter(function (n) { return !n.st._stale; });
           set("agg-online", live.length);
-          var aggF = fmtHash(live.reduce(function (a, n) { return a + n.st.hashrate_khs; }, 0));
+          var aggF = fmtHash(live.reduce(function (a, n) { return a + (+n.st.hashrate_khs || 0); }, 0));
           set("agg-hash", aggF.v);
           set("agg-hash-unit", aggF.u);
           var withTemp = live.filter(function (n) { return n.st.temp_c > 0; });
@@ -765,6 +772,8 @@
     fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
       $("pool").value = c.pool;
       $("port").value = c.port;
+      var prof = $("profile"), key = c.pool + "|" + c.port;  // mostra o perfil do dropdown quando a config bate com um
+      if (prof) { prof.value = key; if (prof.value !== key) prof.value = ""; }
       $("wallet").value = c.wallet;
       $("password").value = c.password;
       if ($("timezone")) $("timezone").value = c.timezone;
