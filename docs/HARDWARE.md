@@ -16,11 +16,21 @@
 
 ## Flash
 
-### Web flasher (recomendado)
+### Pelo navegador (recomendado, sem instalar nada)
 
-`nerdos.cripto.host` (Chrome/Edge, ESP Web Tools) — fonte em `tools/flasher/`.
+Ferramenta oficial da Espressif — [espressif.github.io/esptool-js](https://espressif.github.io/esptool-js/) — em Chrome/Edge:
+**Connect** → porta da placa → **Flash Address** `0x0` → **File** = `*-full.bin` da Release → **Program**. Passo a passo com
+dicas de driver e botão BOOT no README, seção "Comece em 10 minutos". O web flasher próprio (`nerdos.cripto.host`,
+fonte em `tools/flasher/`) ainda não está publicado.
 
-### Cabo USB
+### Terminal (esptool)
+
+```bash
+pip install esptool
+esptool.py write_flash 0x0 criptohost-nerdos-vX.Y.Z-ch-devkit-v1-full.bin
+```
+
+### Desenvolvimento (PlatformIO)
 
 ```bash
 pio run -e ch-devkit-v1 -t upload      # firmware

@@ -10,6 +10,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/) · versionamento 
 
 ### Changed
 - Anel do Home: alvo do DevKit V1 sobe de 350 para 700 kH/s (O1b atingido na v0.3.0); S3 300 e C3/C6 250 inalterados.
+- README "Comece em 10 minutos" reescrito para quem não é técnico: gravação pelo navegador com a ferramenta oficial da Espressif (`esptool-js`, Chrome/Edge, Flash Address `0x0`), dicas de driver CP210x/CH340 e botão BOOT, cabo de dados; `esptool` via pip vira alternativa. Nome do Wi-Fi de setup corrigido para `CriptoHostNerdOS-XXXX`. HARDWARE.md alinhado (o web flasher próprio ainda não está no ar).
 - Docs revisadas para a v0.3.0: hashrate (~700 kH/s) em POOLS, SOLO-NODE e ajuda do Config; arquitetura com `IShaBackend`; exemplos da API com `fw v0.3.0-alpha`; manifests do web flasher em `v0.3.0-alpha` e README do flasher usando o `*-full.bin` da Release; capturas de tela do dashboard refeitas com a placa real a ~734 kH/s.
 - `tools/mock/mock_server.py`: modo `PROXY=<ip>` serve o `data/` local repassando `/api/*` para uma placa real (valida/printa a UI nova sem regravar a LittleFS); defaults do mock em `v0.3.0-alpha` / 705 kH/s.
 

@@ -34,7 +34,7 @@ CriptoHost NerdOS is an **open-source mining firmware** for ESP32 boards. It con
 - 📱 **Installs as an app** — PWA: "Add to Home Screen" on iPhone/Android
 - 🛰️ **Network orbit** — a live fleet map on the Fleet page: your nodes connected in rings around the current one
 - 🔭 **Sees third-party miners** — Bitaxe, NerdQAxe/NerdOctaxe (AxeOS family) and Antminer ASICs (stock firmware or Braiins OS, via the CGMiner API) on the same network show up as amber cards with hashrate, temperature, pool and version (discovery done by CPU/CH Agent nodes)
-- 🌐 **Easy onboarding** — first boot opens the `CriptoHostAP` Wi-Fi portal
+- 🌐 **Easy onboarding** — first boot opens the `CriptoHostNerdOS-XXXX` Wi-Fi portal
 - 🪙 **Multi-coin SHA-256d** — DigiByte (default, frequent shares), BTC, BCH, XEC, PPC, BC2, BCH2 (FusionPool with per-device ports, or BCMonster) — plus free Namecoin + Fractal Bitcoin via merged mining on BCMonster
 
 ## 🖼️ Screens
@@ -50,19 +50,24 @@ Real captures from a mining ESP32 DevKit V1 (validation fleet: boards + Mac + se
 
 ## 🚀 Up and running in 10 minutes
 
-**You'll need:** an ESP32 board (DevKit V1 ~$6, ESP32-S3 or LilyGO T-Display S3), a USB cable and a wallet for the coin you want to mine (DigiByte recommended).
+**You'll need:** an ESP32 board (DevKit V1 ~$6, ESP32-S3 or LilyGO T-Display S3), a USB **data** cable (charge-only cables won't work), a computer with **Chrome or Edge**, and a wallet for the coin you want to mine (DigiByte recommended). Nothing to install.
 
-1. **Download the firmware** for your board from the [Releases page](https://github.com/criptohost/criptohost_nerdos/releases) — grab the `*-full.bin` file (bootloader, app and dashboard included).
-2. **Flash it** at offset `0x0` (esptool, ESP Flash Tool or the web flasher):
-   ```bash
-   pip install esptool
-   esptool.py write_flash 0x0 criptohost-nerdos-vX.Y.Z-ch-devkit-v1-full.bin
-   ```
-3. **Join the board's Wi-Fi** — network `CriptoHostAP` (password `MineYourCoins`) — and follow the portal: pick your network, enter `wallet.worker`.
-4. **Open the dashboard** — `http://ch-XXXX.local` (name shown in the portal) or the board's IP. Within ~30 seconds the first accepted shares show up in the log. 🎉
+1. **Download the firmware** for your board from the [Releases page](https://github.com/criptohost/criptohost_nerdos/releases) — grab your board's `*-full.bin` (e.g. `criptohost-nerdos-v0.3.0-alpha-ch-devkit-v1-full.bin`). It already includes bootloader, app and dashboard.
+2. **Flash it from the browser** with Espressif's official tool — [espressif.github.io/esptool-js](https://espressif.github.io/esptool-js/) (Chrome or Edge; Safari and Firefox won't work):
+   1. Plug the board into USB and open the page.
+   2. Click **Connect** and pick the port that shows up (something like *USB Serial*, *CP2102* or *USB JTAG/serial*). Nothing listed? See the tip below.
+   3. In the file row, change **Flash Address** to `0x0` (it defaults to `0x1000` — it **must be `0x0`**) and under **File** choose the `*-full.bin` you downloaded.
+   4. Click **Program** and wait. It takes 1–2 minutes and is done when the console prints `Leaving...` and `Hard resetting`.
+   5. Press the board's **RST/EN** button (or unplug and replug the USB).
+
+   > 🛠️ **Port not showing?** On Windows install the board's USB driver: [CP210x](https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers) (DevKit V1) or [CH340](https://www.wch-ic.com/downloads/CH341SER_ZIP.html) (clones). macOS and Linux ship it. If it connects but fails to program, hold the board's **BOOT** button while clicking **Connect** and release once it starts.
+   >
+   > 💻 **Prefer a terminal?** `pip install esptool`, then `esptool.py write_flash 0x0 criptohost-nerdos-vX.Y.Z-ch-devkit-v1-full.bin`.
+3. **Join the board's Wi-Fi** — from your phone or computer, connect to the `CriptoHostNerdOS-XXXX` network (password `MineYourCoins`). The portal opens on its own (if not, browse to `http://192.168.4.1`): pick your Wi-Fi and type its password, enter `wallet.worker` and save. The pool comes pre-filled (DigiByte on FusionPool).
+4. **Open the dashboard** — `http://ch-XXXX.local` (name shown in the portal) or the board's IP from your router. Within ~30 seconds the first accepted shares show up in the log. 🎉
 5. **(Optional)** On your phone: Safari/Chrome → Share → **Add to Home Screen** — it becomes an app.
 
-> 💡 Future updates: through the dashboard's **OTA** page with the `*-ota.bin` file — no cable.
+> 💡 Future updates: through the dashboard's **OTA** page with the `*-ota.bin` file — no cable, no tool.
 
 ## 🕸️ The fleet (and its siblings)
 

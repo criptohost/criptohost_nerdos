@@ -34,7 +34,7 @@ O CriptoHost NerdOS é um **firmware open-source de mineração** para placas ES
 - 📱 **Vira app no celular** — PWA: "Adicionar à Tela de Início" no iPhone/Android
 - 🛰️ **Órbita da rede** — mapa vivo da frota no Fleet: seus nós conectados em anéis ao redor do nó atual
 - 🔭 **Enxerga mineradores de terceiros** — Bitaxe, NerdQAxe/NerdOctaxe (família AxeOS) e ASICs Antminer (stock ou Braiins OS, via API CGMiner) na mesma rede aparecem em cartão âmbar com hashrate, temperatura, pool e versão (descoberta feita pelos nós CPU/CH Agent)
-- 🌐 **Provisionamento fácil** — primeiro boot abre o portal Wi-Fi `CriptoHostAP`
+- 🌐 **Provisionamento fácil** — primeiro boot abre o portal Wi-Fi `CriptoHostNerdOS-XXXX`
 - 🪙 **Multi-moeda SHA-256d** — DigiByte (default, shares frequentes), BTC, BCH, XEC, PPC, BC2, BCH2 (FusionPool com porta por aparelho, ou BCMonster) — e Namecoin + Fractal Bitcoin de graça via merged mining na BCMonster
 
 ## 🖼️ Telas
@@ -50,19 +50,24 @@ Capturas reais de um ESP32 DevKit V1 minerando (frota de validação: placas + M
 
 ## 🚀 Comece em 10 minutos
 
-**Você vai precisar de:** uma placa ESP32 (DevKit V1 ~R$ 30, ESP32-S3 ou LilyGO T-Display S3), cabo USB e uma carteira da moeda que quer minerar (DigiByte recomendado).
+**Você vai precisar de:** uma placa ESP32 (DevKit V1 ~R$ 30, ESP32-S3 ou LilyGO T-Display S3), um cabo USB **de dados** (cabo só de carga não funciona), um computador com **Chrome ou Edge** e uma carteira da moeda que quer minerar (DigiByte recomendado). Não precisa instalar nada.
 
-1. **Baixe o firmware** da sua placa na [página de Releases](https://github.com/criptohost/criptohost_nerdos/releases) — pegue o arquivo `*-full.bin` (já vem com bootloader, app e dashboard).
-2. **Grave na placa** no offset `0x0` (esptool, ESP Flash Tool ou o web flasher):
-   ```bash
-   pip install esptool
-   esptool.py write_flash 0x0 criptohost-nerdos-vX.Y.Z-ch-devkit-v1-full.bin
-   ```
-3. **Conecte no Wi-Fi da placa** — rede `CriptoHostAP` (senha `MineYourCoins`) — e siga o portal: escolha sua rede, informe `carteira.worker`.
-4. **Abra o dashboard** — `http://ch-XXXX.local` (o nome aparece no portal) ou o IP da placa. Em ~30 segundos os primeiros shares aceitos aparecem no log. 🎉
+1. **Baixe o firmware** da sua placa na [página de Releases](https://github.com/criptohost/criptohost_nerdos/releases) — pegue o arquivo `*-full.bin` da sua placa (ex.: `criptohost-nerdos-v0.3.0-alpha-ch-devkit-v1-full.bin`). Ele já vem com bootloader, app e dashboard.
+2. **Grave pelo navegador**, na ferramenta oficial da Espressif — [espressif.github.io/esptool-js](https://espressif.github.io/esptool-js/) (Chrome ou Edge; Safari e Firefox não servem):
+   1. Ligue a placa no USB e abra a página.
+   2. Clique em **Connect** e escolha a porta que aparecer (algo como *USB Serial*, *CP2102* ou *USB JTAG/serial*). Se nada aparecer, veja a dica abaixo.
+   3. Na linha do arquivo, troque **Flash Address** para `0x0` (vem `0x1000` por padrão — **tem que ser `0x0`**) e em **File** escolha o `*-full.bin` que baixou.
+   4. Clique em **Program** e aguarde. Leva 1–2 minutos; termina quando o console mostrar `Leaving...` e `Hard resetting`.
+   5. Aperte o botão **RST/EN** da placa (ou tire e coloque o USB).
+
+   > 🛠️ **A porta não aparece?** No Windows, instale o driver da porta USB da placa: [CP210x](https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers) (DevKit V1) ou [CH340](https://www.wch-ic.com/downloads/CH341SER_ZIP.html) (clones). No macOS e Linux ele já vem no sistema. Se conectar mas der erro ao gravar, segure o botão **BOOT** da placa enquanto clica em **Connect** e solte quando começar.
+   >
+   > 💻 **Prefere o terminal?** `pip install esptool` e depois `esptool.py write_flash 0x0 criptohost-nerdos-vX.Y.Z-ch-devkit-v1-full.bin`.
+3. **Conecte no Wi-Fi da placa** — no celular ou no computador, entre na rede `CriptoHostNerdOS-XXXX` (senha `MineYourCoins`). O portal abre sozinho (se não abrir, acesse `http://192.168.4.1`): escolha sua rede Wi-Fi e digite a senha, informe `carteira.worker` e salve. A pool já vem preenchida (DigiByte na FusionPool).
+4. **Abra o dashboard** — `http://ch-XXXX.local` (o nome aparece no portal) ou o IP da placa no seu roteador. Em ~30 segundos os primeiros shares aceitos aparecem no log. 🎉
 5. **(Opcional)** No celular: Safari/Chrome → Compartilhar → **Adicionar à Tela de Início** — vira um app.
 
-> 💡 Atualizações futuras: pela própria página **OTA** do dashboard, com o arquivo `*-ota.bin` — sem cabo.
+> 💡 Atualizações futuras: pela própria página **OTA** do dashboard, com o arquivo `*-ota.bin` — sem cabo e sem ferramenta.
 
 ## 🕸️ A frota (e os irmãos do ecossistema)
 
