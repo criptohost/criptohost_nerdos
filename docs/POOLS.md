@@ -25,6 +25,12 @@ Profiles in the Config dropdown (verified 2026-08):
 | PPC | letsmine.it | `us1.letsmine.it:3347` | solo | Peercoin |
 | XEC | mining-dutch | `xec.mining-dutch.nl:9998` | PPLNS | Requires an account |
 | BCH | mining-dutch | `bch.mining-dutch.nl:9985` | PPLNS | Requires an account |
+| **XMR** (CPU only) | SupportXMR | `pool.supportxmr.com:3333` | PPLNS 0.6% | RandomX via XMRig no CPUMiner; low-end port; carteira de 95 caracteres |
+| **XMR** (CPU only) | MoneroOcean | `gulf.moneroocean.stream:10001` | auto-switch, paga XMR, 0.3% | RandomX via XMRig |
+| **SAL** (CPU only) | FusionPool | `sal.fusionpool.pro:3443` | Híbrida 70/25/5 (2%) | Salvium, RandomX; TCP puro; carteira Carrot `SC1…` |
+| **YTN / ZNY / MBC / LCC** (CPU only) | zpool | `yespowerr16.mine.zpool.ca:6534` · `yescryptr8.mine.zpool.ca:6323` · `power2b.mine.zpool.ca:6242` · `minotaurx.mine.zpool.ca:7019` | 1% | password `c=MOEDA`; yespower/yescrypt no cpuminer-opt; ZNY roda até em 32 bits |
+
+> Linhas **CPU only** não aparecem no dropdown da placa: o ESP32 só faz SHA-256d. Elas existem para os irmãos CPU/Android (`criptohost_cpuminer`), que usam o mesmo dashboard.
 
 ### FusionPool BCH2 — porta por aparelho
 

@@ -4,6 +4,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/) · versionamento 
 
 ## [Unreleased]
 
+### Added
+- Dashboard (compartilhado com o CPUMiner): perfis **CPU only** (Monero SupportXMR/MoneroOcean, Salvium FusionPool, Yenten/BitZeny/MicroBitcoin/Litecoin Cash na zpool) com `algo` e password por perfil; escondidos automaticamente na placa. Símbolos XMR/SAL/YTN/ZNY/MBC/LCC no card, preços XMR e SAL no ticker.
+- Config: validação de carteira contra a pool antes de salvar (BCH2 `bitcoincashii:`, Salvium `SC1`/`SaLv`, Monero 95 caracteres, zpool `c=MOEDA`).
+- `/api/config` do CPUMiner aceita `algo`; `/api/status` ganha `algo` (aditivo). Firmware da placa ignora o campo.
+
 ## [v0.3.1-alpha] — 2026-09-07
 
 Correção do dashboard (LittleFS). Grave o `*-full.bin`: o OTA só atualiza o app, não o dashboard — placas que subiram para v0.3.0 por OTA continuam com o Fleet antigo.
