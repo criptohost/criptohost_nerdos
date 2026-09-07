@@ -4,8 +4,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/) · versionamento 
 
 ## [Unreleased]
 
+## [v0.3.1-alpha] — 2026-09-07
+
+Correção do dashboard (LittleFS). Grave o `*-full.bin`: o OTA só atualiza o app, não o dashboard — placas que subiram para v0.3.0 por OTA continuam com o Fleet antigo.
+
 ### Fixed
-- Fleet: um peer sem `hashrate_khs` (agent parcial, ASIC, nó com 401) derrubava o render da página inteira (`TypeError` em `fmtHash`) — ficava em "Scanning…" com 0 dispositivos. Agora conta como 0 kH/s.
+- Fleet: um peer que responde `401 {"error":"unauthorized"}` (nó na internet sem token na lista) ou sem `hashrate_khs` derrubava o render da página inteira (`TypeError` em `fmtHash`) — ficava em "Scanning…" com 0 dispositivos. Agora peer sem `worker` é ignorado e hashrate ausente conta como 0.
+- Fleet: o nó próprio nem sempre ficava no centro da órbita (a lista era reordenada por nome depois de colocá-lo em primeiro) e o total de hashrate zerava se um nó não tinha o campo.
 - Config: o dropdown "Pool profile" mostrava "custom" mesmo quando a config batia com um perfil; agora seleciona o perfil correspondente ao carregar.
 
 ### Changed
