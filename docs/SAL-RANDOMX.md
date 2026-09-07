@@ -57,3 +57,32 @@ comparar H/s de RandomX com kH/s de SHA como se fossem a mesma coisa.
   manter o aviso "na tomada" e o limite de threads como default.
 - **Limite por IP na FusionPool DGB** (visto em 2026-09-07, portas 3332/3333 recusando conexões novas): perguntar
   à pool antes de somar mais um endpoint por rede.
+
+## Além do SAL: Monero e outras moedas de CPU
+
+O trabalho do SAL (motor escolhido por `algo` do perfil, agent lendo mais de uma API, símbolo/preço/validação
+de carteira no dashboard) é **genérico**. Feito uma vez, abre três famílias:
+
+| Família | Motor | Moedas (exemplos) | Custo extra depois do SAL |
+|---|---|---|---|
+| **RandomX** (`rx/*`) | XMRig | **Monero (XMR, `rx/0`)**, Salvium (SAL), Wownero (WOW, `rx/wow`), ArQmA (`rx/arq`) | Só perfis + símbolo/preço |
+| **GhostRider / Argon2** | XMRig | Raptoreum (RTM, `gr`), Chukwa | Só perfis |
+| **yespower / yescrypt / minotaurx** | **cpuminer-opt, que já temos** | Yenten (`yespowerr16`), CPUchain (`yespower`), BitZeny (`yescryptr8`), Koto (`yescryptr8g`), MicroBitcoin (`power2b`), Litecoin Cash (`minotaurx`) | Zero motor novo: só a seleção de `algo` por perfil (hoje `-a sha256d` está fixo no `mine.sh` e no agent) |
+
+**Sobre "baixa dificuldade":** a dificuldade da share é da pool (vardiff), não da moeda. O que muda entre moedas
+é a dificuldade da *rede* (chance de bloco) e quão amigável o algoritmo é a CPU/celular. Para o objetivo do projeto
+(shares aceitos aparecendo com frequência), qualquer pool com vardiff serve; Monero e as yespower são as que dão
+retorno visível numa CPU comum porque ASICs não competem.
+
+Candidatas por aparelho:
+
+| Aparelho | Melhor aposta | Por quê |
+|---|---|---|
+| PC (x86-64, ≥4 GB) | **Monero** via XMRig, modo rápido | maior liquidez, pools com porta "low-end" (SupportXMR 3333, MoneroOcean 10001) e vardiff desde 10 k |
+| Celular aarch64 ≥3 GB | Monero/SAL em modo rápido (0,3–1,5 kH/s) ou **VerusCoin** (VerusHash 2.2, 1–4 MH/s em celular — mas exige outro motor, `ccminer-verus`/hellminer) | RandomX cabe; VerusHash é o algoritmo desenhado para celular |
+| TV box 32 bits | **yescrypt** via cpuminer-multi (`-a yescrypt`, BitZeny/Koto) | RandomX não roda em 32 bits; yescrypt roda |
+| ESP32 | continua só SHA-256d | 520 KB de RAM |
+
+**Ordem que recomendo:** (1) `algo` por perfil em `mine.sh`/`agent.py` + 3–4 perfis yespower/yescrypt: barato,
+sem motor novo, e já dá "outras moedas"; (2) XMRig com SAL **e Monero** no mesmo passo, porque a diferença é um
+perfil; (3) VerusCoin só se a meta for celular — é um terceiro motor.
