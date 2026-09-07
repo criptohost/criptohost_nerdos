@@ -23,6 +23,10 @@ Ferramenta oficial da Espressif — [espressif.github.io/esptool-js](https://esp
 dicas de driver e botão BOOT no README, seção "Comece em 10 minutos". O web flasher próprio (`nerdos.cripto.host`,
 fonte em `tools/flasher/`) ainda não está publicado.
 
+### Atualizações depois do primeiro flash (OTA, sem cabo)
+
+Página **OTA** do dashboard: envie o `*-ota.bin` (firmware) e depois o `*-fs.bin` (dashboard) da Release. Config da pool e lista de peers são preservados (v0.4.0+). O `*-full.bin` é só para USB.
+
 ### Terminal (esptool)
 
 ```bash
