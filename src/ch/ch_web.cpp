@@ -47,6 +47,13 @@ static uint32_t s_otaLastChunk = 0;
 static StreamBufferHandle_t s_otaStream = nullptr;
 static TaskHandle_t s_otaWriter = nullptr;
 static char s_otaErr[96] = {0};
+// OTA da LittleFS (dashboard): ?target=fs no prepare. Os arquivos de estado que moram na LittleFS
+// (config da pool, lista de peers) são guardados em RAM e regravados depois da imagem nova,
+// senão a placa volta ao portal de setup (visto no flash USB completo).
+static bool s_otaFs = false;
+static const char* const kKeepFiles[] = {"/config.json", "/peers.conf", "/peers.rev"};
+static String s_keep[3];
+static String readFileStr(const char* p) { File f = LittleFS.open(p, "r"); if (!f) return String(); String s = f.readString(); f.close(); return s; }
 
 static void otaSetErr(const char* why)
 {
@@ -103,10 +110,17 @@ static void otaWriterFail(const char* why)
 
 static void otaWriterTask(void*)
 {
-  if (!esp_ota_get_next_update_partition(NULL))
-    otaWriterFail("no OTA slot (USB factory flash needed)");
-  if (!Update.begin(UPDATE_SIZE_UNKNOWN))
-    otaWriterFail(Update.errorString());
+  if (s_otaFs) {
+    for (int i = 0; i < 3; i++) s_keep[i] = readFileStr(kKeepFiles[i]);
+    LittleFS.end();
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS))   // partição "spiffs" (LittleFS usa o mesmo subtipo)
+      otaWriterFail(Update.errorString());
+  } else {
+    if (!esp_ota_get_next_update_partition(NULL))
+      otaWriterFail("no OTA slot (USB factory flash needed)");
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+      otaWriterFail(Update.errorString());
+  }
   s_otaStream = xStreamBufferCreate(4 * 1024, 1);
   if (!s_otaStream)
     otaWriterFail("out of memory");
@@ -127,6 +141,13 @@ static void otaWriterTask(void*)
       if (!s_otaOk) {
         otaSetErr(Update.errorString());
         Update.abort();
+      }
+      if (s_otaFs) {   // remonta a LittleFS nova (ou a antiga, se falhou) e devolve config + peers
+        LittleFS.begin(true);
+        if (s_otaOk) for (int i = 0; i < 3; i++) if (s_keep[i].length()) {
+          File f = LittleFS.open(kKeepFiles[i], "w"); if (f) { f.print(s_keep[i]); f.close(); }
+        }
+        for (int i = 0; i < 3; i++) s_keep[i] = String();
       }
       s_otaDone = true;
       s_otaWriter = nullptr;
@@ -240,7 +261,7 @@ static void handleOtaUpload(AsyncWebServerRequest* req, String filename, size_t 
       s_otaFail = true;
       return;
     }
-    if (len < 1 || data[0] != 0xE9) {
+    if (!s_otaFs && (len < 1 || data[0] != 0xE9)) {   // imagem de app começa em 0xE9; LittleFS não
       s_otaFail = true;
       s_otaOk = false;
       return;
@@ -358,7 +379,8 @@ void ch_web_setup()
       sendJson(r, "{\"ok\":true}");
       return;
     }
-    if (!esp_ota_get_next_update_partition(NULL)) {
+    s_otaFs = r->hasParam("target") && r->getParam("target")->value() == "fs";
+    if (!s_otaFs && !esp_ota_get_next_update_partition(NULL)) {
       sendJson(r, "{\"error\":\"this flash layout has no OTA slot — erase and USB-flash the factory image once\"}", 400);
       return;
     }

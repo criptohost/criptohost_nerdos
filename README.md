@@ -67,7 +67,7 @@ Capturas reais de um ESP32 DevKit V1 minerando (frota de validação: placas + M
 4. **Abra o dashboard** — `http://ch-XXXX.local` (o nome aparece no portal) ou o IP da placa no seu roteador. Em ~30 segundos os primeiros shares aceitos aparecem no log. 🎉
 5. **(Opcional)** No celular: Safari/Chrome → Compartilhar → **Adicionar à Tela de Início** — vira um app.
 
-> 💡 Atualizações futuras: pela própria página **OTA** do dashboard, com o arquivo `*-ota.bin` — sem cabo e sem ferramenta.
+> 💡 Atualizações futuras: pela própria página **OTA** do dashboard, sem cabo — envie o `*-ota.bin` (firmware) e depois o `*-fs.bin` (dashboard). Sua configuração é preservada.
 
 ## 🕸️ A frota (e os irmãos do ecossistema)
 

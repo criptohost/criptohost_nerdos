@@ -1007,11 +1007,14 @@
       var f = picked || (file && file.files[0]);
       if (!f) return;
       if (!/\.bin$/i.test(f.name)) { set("ota-msg", "Select a .bin file"); return; }
+      if (/full\.bin$/i.test(f.name)) { set("ota-msg", "The *-full.bin is for USB flashing. Use *-ota.bin (app) or *-fs.bin (dashboard) here."); return; }
+      // *-fs.bin / littlefs.bin = dashboard (LittleFS); config e peers são preservados pelo firmware
+      var isFs = /(-fs|littlefs)\.bin$/i.test(f.name);
       if (otaXhr) { try { otaXhr.abort(); } catch (e) {} otaXhr = null; }
       resetOtaBar();
       $("ota-btn").disabled = true;
-      set("ota-msg", "Pausing miner…");
-      fetch("/api/ota/prepare", { method: "POST" }).then(function (r) {
+      set("ota-msg", isFs ? "Pausing miner (dashboard update)…" : "Pausing miner…");
+      fetch("/api/ota/prepare" + (isFs ? "?target=fs" : ""), { method: "POST" }).then(function (r) {
         if (r.status === 404) {
           resetOtaBar();
           failOta("This firmware cannot OTA while mining. Flash once over USB.");

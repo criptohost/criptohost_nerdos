@@ -5,7 +5,7 @@
 // Marca protegida (ver BRANDING.md). Compile com -D CH_UNBRANDED para fork neutro.
 
 #ifndef CH_VERSION
-#define CH_VERSION "v0.3.1-alpha"
+#define CH_VERSION "v0.4.0-alpha"
 #endif
 
 #ifdef CH_UNBRANDED

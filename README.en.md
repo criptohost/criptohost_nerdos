@@ -67,7 +67,7 @@ Real captures from a mining ESP32 DevKit V1 (validation fleet: boards + Mac + se
 4. **Open the dashboard** — `http://ch-XXXX.local` (name shown in the portal) or the board's IP from your router. Within ~30 seconds the first accepted shares show up in the log. 🎉
 5. **(Optional)** On your phone: Safari/Chrome → Share → **Add to Home Screen** — it becomes an app.
 
-> 💡 Future updates: through the dashboard's **OTA** page with the `*-ota.bin` file — no cable, no tool.
+> 💡 Future updates: through the dashboard's **OTA** page, no cable — upload the `*-ota.bin` (firmware) and then the `*-fs.bin` (dashboard). Your configuration is preserved.
 
 ## 🕸️ The fleet (and its siblings)
 

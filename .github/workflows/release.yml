@@ -43,6 +43,8 @@ jobs:
             ${{ matrix.spiffs }} .pio/build/${{ matrix.target }}/littlefs.bin
           cp .pio/build/${{ matrix.target }}/firmware.bin \
             out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}-ota.bin
+          cp .pio/build/${{ matrix.target }}/littlefs.bin \
+            out/criptohost-nerdos-${{ github.ref_name }}-${{ matrix.target }}-fs.bin
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
@@ -51,6 +53,6 @@ jobs:
           body: |
             **Como instalar**
             - Primeira vez (USB/web flasher): grave o `*-full.bin` no offset `0x0` — já inclui bootloader, partições, app e dashboard.
-            - Atualização pela página OTA do dashboard: envie o `*-ota.bin` da sua placa.
+            - Atualização pela página OTA do dashboard: envie o `*-ota.bin` (firmware) e depois o `*-fs.bin` (dashboard) da sua placa — config e peers são preservados.
 
             Placas: `ch-devkit-v1` (ESP32 DevKit V1) · `ch-esp32s3` (S3 headless) · `ch-tdisplay-s3` (LilyGO T-Display S3).
