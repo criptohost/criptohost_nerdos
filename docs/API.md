@@ -46,6 +46,10 @@ Troca da rede STA sem voltar ao captive portal.
 
 Restart reinicia mantendo config. Factory reset apaga config + Wi-Fi e volta ao portal `CriptoHostNerdOS-XXXX` (a UI pede confirmação dupla).
 
+## POST /api/ota/prepare?target=fs · POST /api/ota
+
+Com `?target=fs` no prepare, o mesmo upload grava a **LittleFS** (dashboard, `*-fs.bin` da Release) em vez do app. O firmware guarda `/config.json`, `/peers.conf` e `/peers.rev` em RAM e regrava após a imagem nova: a placa volta minerando com a mesma config. Sem `target`, comportamento de sempre (app, exige magic `0xE9`).
+
 ## POST /api/ota
 
 `multipart/form-data` com o `.bin`. Valida magic byte `0xE9` no primeiro chunk (binário inválido → `400`, sem brick). Sucesso → `200` e reboot. Config preservada (NVS/LittleFS fora das partições de app). Exige tabela com `ota_0` **e** `ota_1` (`partitions/ch_4mb_ota.csv`). Builds antigos em `huge_app.csv` (só `ota_0`) não têm slot OTA — `POST /api/ota/prepare` devolve 400; flash USB factory uma vez.
