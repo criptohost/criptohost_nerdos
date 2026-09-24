@@ -34,6 +34,9 @@ void resetStat();
 #ifdef CH_BUILD
 void mining_register_tasks(TaskHandle_t miner1, TaskHandle_t miner2, TaskHandle_t stratum, TaskHandle_t monitor);
 void mining_pause_for_ota();
+extern bool pool_on_fallback;           // failover de pool (mining.cpp)
+const String& pool_active_host();
+int pool_active_port();
 void mining_resume_after_ota();
 #endif
 
