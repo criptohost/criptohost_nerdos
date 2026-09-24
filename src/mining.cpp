@@ -74,30 +74,68 @@ int saveIntervals[7] = {5 * 60, 15 * 60, 30 * 60, 1 * 3600, 3 * 3600, 6 * 3600, 
 int saveIntervalsSize = sizeof(saveIntervals)/sizeof(saveIntervals[0]);
 int currentIntervalIndex = 0;
 
+// ---- failover de pool ----
+// 3 falhas seguidas no primário e fallback configurado → conecta no fallback. No fallback, a cada
+// 10 min um TCP connect de teste no primário; respondeu → derruba a sessão e a próxima volta ao primário.
+#define POOL_FAIL_SWITCH   3
+#define POOL_PROBE_MS      (10UL * 60UL * 1000UL)
+bool pool_on_fallback = false;
+static uint8_t s_poolFails = 0;
+static uint32_t s_lastProbe = 0;
+static bool poolHasFallback() { return Settings.PoolAddress2.length() >= 4 && Settings.PoolPort2 > 0; }
+const String& pool_active_host() { return pool_on_fallback ? Settings.PoolAddress2 : Settings.PoolAddress; }
+int pool_active_port() { return pool_on_fallback ? Settings.PoolPort2 : Settings.PoolPort; }
+
+static void poolProbePrimary() {
+  if (!pool_on_fallback || millis() - s_lastProbe < POOL_PROBE_MS) return;
+  s_lastProbe = millis();
+  WiFiClient probe;
+  if (probe.connect(Settings.PoolAddress.c_str(), Settings.PoolPort, 5000)) {
+    probe.stop();
+    Serial.println("[CH] pool primaria voltou — retornando");
+#ifdef CH_BUILD
+    ch_log_event("conn", "Primary pool is back — switching from fallback to " + Settings.PoolAddress);
+#endif
+    pool_on_fallback = false;
+    s_poolFails = 0;
+    serverIP = IPAddress(1, 1, 1, 1);
+    client.stop();   // stratum loop reconecta no primário
+  }
+}
+
 bool checkPoolConnection(void) {
-  
+  poolProbePrimary();
   if (client.connected()) {
     return true;
   }
-  
+
   isMinerSuscribed = false;
 
-  Serial.println("Client not connected, trying to connect..."); 
-  
+  Serial.println("Client not connected, trying to connect...");
+
   //Resolve first time pool DNS and save IP
   if(serverIP == IPAddress(1,1,1,1)) {
-    WiFi.hostByName(Settings.PoolAddress.c_str(), serverIP);
+    WiFi.hostByName(pool_active_host().c_str(), serverIP);
     Serial.printf("Resolved DNS and save ip (first time) got: %s\n", serverIP.toString());
   }
 
   //Try connecting pool IP
-  if (!client.connect(serverIP, Settings.PoolPort)) {
-    Serial.println("Imposible to connect to : " + Settings.PoolAddress);
-    WiFi.hostByName(Settings.PoolAddress.c_str(), serverIP);
+  if (!client.connect(serverIP, pool_active_port())) {
+    Serial.println("Imposible to connect to : " + pool_active_host());
+    WiFi.hostByName(pool_active_host().c_str(), serverIP);
     Serial.printf("Resolved DNS got: %s\n", serverIP.toString());
+    if (!pool_on_fallback && poolHasFallback() && ++s_poolFails >= POOL_FAIL_SWITCH) {
+      Serial.println("[CH] pool primaria fora — usando fallback");
+#ifdef CH_BUILD
+      ch_log_event("conn", "Primary pool unreachable — switching to fallback " + Settings.PoolAddress2);
+#endif
+      pool_on_fallback = true;
+      s_lastProbe = millis();
+      serverIP = IPAddress(1, 1, 1, 1);
+    }
     return false;
   }
-
+  s_poolFails = 0;
   return true;
 }
 

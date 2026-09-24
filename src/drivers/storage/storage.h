@@ -57,6 +57,8 @@
 #define JSON_SPIFFS_KEY_POOLURL		"poolString"
 #define JSON_SPIFFS_KEY_POOLPORT	"portNumber"
 #define JSON_SPIFFS_KEY_POOLPASS	"poolPassword"
+#define JSON_SPIFFS_KEY_POOLURL2	"poolString2"   /* fallback (vazio = desligado) */
+#define JSON_SPIFFS_KEY_POOLPORT2	"portNumber2"
 #define JSON_SPIFFS_KEY_WALLETID	"btcString"
 #define JSON_SPIFFS_KEY_TIMEZONE	"gmtZone"
 #define JSON_SPIFFS_KEY_STATS2NV	"saveStatsToNVS"
@@ -72,6 +74,8 @@ struct TSettings
 	char BtcWallet[80]{ DEFAULT_WALLETID };
 	char PoolPassword[80]{ DEFAULT_POOLPASS };
 	int PoolPort{ DEFAULT_POOLPORT };
+	String PoolAddress2{ "" };   // pool de fallback (opcional)
+	int PoolPort2{ 0 };
 	int Timezone{ DEFAULT_TIMEZONE };
 	bool saveStats{ DEFAULT_SAVESTATS };
 	bool invertColors{ DEFAULT_INVERTCOLORS };

@@ -30,6 +30,8 @@ Profiles in the Config dropdown (verified 2026-08):
 | **SAL** (CPU only) | FusionPool | `sal.fusionpool.pro:3443` | Híbrida 70/25/5 (2%) | Salvium, RandomX; TCP puro; carteira Carrot `SC1…` |
 | **YTN / ZNY / MBC / LCC** (CPU only) | zpool | `yespowerr16.mine.zpool.ca:6534` · `yescryptr8.mine.zpool.ca:6323` · `power2b.mine.zpool.ca:6242` · `minotaurx.mine.zpool.ca:7019` | 1% | password `c=MOEDA`; yespower/yescrypt no cpuminer-opt; ZNY roda até em 32 bits |
 
+> **Fallback:** qualquer linha desta tabela serve como segunda pool no Config (campo *Fallback pool*), desde que seja a mesma moeda da principal — ex.: FusionPool `:3332` principal e hmpool `:3337` fallback para DGB.
+
 > Linhas **CPU only** não aparecem no dropdown da placa: o ESP32 só faz SHA-256d. Elas existem para os irmãos CPU/Android (`criptohost_cpuminer`), que usam o mesmo dashboard.
 
 ### FusionPool BCH2 — porta por aparelho

@@ -350,7 +350,7 @@
     set("bestdiff", st.best_difficulty);
     set("templates", st.templates);
     set("valids", st.valid_blocks);
-    set("pool-conn", st.status === "mining" ? "Mining" : st.status);
+    set("pool-conn", (st.status === "mining" ? "Mining" : st.status) + (st.pool_fallback_active ? " · on fallback" : ""));
     set("fw", st.fw);
 
     set("w-worker", st.worker);
@@ -782,6 +782,7 @@
     fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
       $("pool").value = c.pool;
       $("port").value = c.port;
+      if ($("pool2")) { $("pool2").value = c.pool2 || ""; $("port2").value = c.port2 || ""; }
       if ($("algo")) $("algo").value = c.algo || "sha256d";
       // perfil do dropdown: casa host|port e, se houver, o algo (valores têm 2 a 4 campos)
       var prof = $("profile");
@@ -846,6 +847,7 @@
       if ((h.indexOf("sal.") === 0 || h.indexOf("salvium") >= 0) && !/^(SC1|SaLv)/.test(w)) return "Salvium needs an SC1… (Carrot) or SaLv… address.";
       if (/supportxmr|moneroocean|xmr|monero/.test(h) && !/^[48][0-9A-Za-z]{94}$/.test(w)) return "Monero needs a 95-char address starting with 4 or 8.";
       if (h.indexOf("zpool") >= 0 && !/c=[A-Z0-9]+/.test($("password").value)) return "zpool needs c=COIN in the password (e.g. c=YTN).";
+      if ($("pool2") && $("pool2").value.trim() && !(+$("port2").value)) return "Fallback pool needs a port.";
       return "";
     }
 
@@ -860,6 +862,8 @@
         body: JSON.stringify({
           pool: $("pool").value.trim(),
           port: +$("port").value,
+          pool2: $("pool2") ? $("pool2").value.trim() : "",
+          port2: $("port2") && $("port2").value ? +$("port2").value : 0,
           algo: $("algo") ? $("algo").value : "sha256d",
           wallet: $("wallet").value.trim(),
           password: $("password").value,

@@ -4,6 +4,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/) · versionamento 
 
 ## [Unreleased]
 
+## [v0.4.1-alpha] — 2026-09-24
+
+### Added
+- **Failover de pool** (placa e, pelo mesmo dashboard, CPUMiner/Android): campo opcional *Fallback pool* no Config (`pool2`/`port2` em `/api/config`). Após 3 falhas seguidas de conexão no primário o nó passa ao fallback; a cada 10 min testa o primário com um TCP connect e volta sozinho. `/api/status` ganha `pool_fallback_active` e `pool` passa a ser a pool **ativa**. Config antiga sem `pool2` = sem fallback, comportamento inalterado. Home mostra "· on fallback".
+
 ## [v0.4.0-alpha] — 2026-09-07
 
 ### Added

@@ -187,6 +187,7 @@ static String configJson()
 {
   String j = "{\"pool\":\"" + Settings.PoolAddress + "\"";
   j += ",\"port\":" + String(Settings.PoolPort);
+  j += ",\"pool2\":\"" + Settings.PoolAddress2 + "\",\"port2\":" + String(Settings.PoolPort2);
   j += ",\"wallet\":\"" + String(Settings.BtcWallet) + "\"";
   j += ",\"password\":\"" + String(Settings.PoolPassword) + "\"";
   j += ",\"timezone\":" + String(Settings.Timezone);
@@ -217,6 +218,14 @@ static void handleConfigPost(AsyncWebServerRequest* req, uint8_t* data, size_t l
     Settings.Timezone = tz;
   }
 
+  if (doc.containsKey("pool2")) {   // fallback opcional: "" desliga
+    String pool2 = doc["pool2"] | ""; pool2.trim();
+    int port2 = doc["port2"] | 0;
+    if (pool2.length() && (pool2.length() < 4 || pool2.length() > 128 || port2 < 1 || port2 > 65535)) {
+      sendJson(req, "{\"error\":\"invalid fallback pool\"}", 400); return;
+    }
+    Settings.PoolAddress2 = pool2; Settings.PoolPort2 = pool2.length() ? port2 : 0;
+  }
   Settings.PoolAddress = pool;
   Settings.PoolPort = port;
   strncpy(Settings.BtcWallet, wallet.c_str(), sizeof(Settings.BtcWallet) - 1);

@@ -114,7 +114,8 @@ String ch_status_json()
   j += ",\"temp_c\":" + String(temperatureRead(), 1);
   j += ",\"rssi_dbm\":" + String(WiFi.RSSI());
   j += ",\"uptime_s\":" + String((uint32_t)upTime);
-  j += ",\"pool\":\"" + Settings.PoolAddress + ":" + String(Settings.PoolPort) + "\"";
+  j += ",\"pool\":\"" + pool_active_host() + ":" + String(pool_active_port()) + "\"";
+  j += ",\"pool_fallback_active\":" + String(pool_on_fallback ? "true" : "false");
   uint32_t sent = ch_shares_sent, acc = ch_shares_accepted, rej = ch_shares_rejected;
   uint32_t pending = (sent > acc + rej) ? sent - acc - rej : 0;
   j += ",\"shares\":{\"found\":" + String(shares) +
@@ -213,7 +214,7 @@ void ch_state_tick()
 
   bool mining = elapsedKHs > 0;
   if (mining != lMining) {
-    ch_log_event("conn", mining ? "Mining on " + Settings.PoolAddress : "Hashrate idle — checking pool");
+    ch_log_event("conn", mining ? "Mining on " + pool_active_host() : "Hashrate idle — checking pool");
     lMining = mining;
   }
 }

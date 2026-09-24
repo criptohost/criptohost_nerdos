@@ -38,6 +38,8 @@ bool nvMemory::saveConfig(TSettings* Settings)
         json[JSON_SPIFFS_KEY_POOLURL] = Settings->PoolAddress;
         json[JSON_SPIFFS_KEY_POOLPORT] = Settings->PoolPort;
         json[JSON_SPIFFS_KEY_POOLPASS] = Settings->PoolPassword;
+        json[JSON_SPIFFS_KEY_POOLURL2] = Settings->PoolAddress2;
+        json[JSON_SPIFFS_KEY_POOLPORT2] = Settings->PoolPort2;
         json[JSON_SPIFFS_KEY_WALLETID] = Settings->BtcWallet;
         json[JSON_SPIFFS_KEY_TIMEZONE] = Settings->Timezone;
         json[JSON_SPIFFS_KEY_STATS2NV] = Settings->saveStats;
@@ -101,6 +103,8 @@ bool nvMemory::loadConfig(TSettings* Settings)
                     strcpy(Settings->BtcWallet, json[JSON_SPIFFS_KEY_WALLETID] | Settings->BtcWallet);
                     if (json.containsKey(JSON_SPIFFS_KEY_POOLPORT))
                         Settings->PoolPort = json[JSON_SPIFFS_KEY_POOLPORT].as<int>();
+                    Settings->PoolAddress2 = json[JSON_SPIFFS_KEY_POOLURL2] | Settings->PoolAddress2;   // config antiga sem a chave = sem fallback
+                    Settings->PoolPort2 = json[JSON_SPIFFS_KEY_POOLPORT2] | Settings->PoolPort2;
                     if (json.containsKey(JSON_SPIFFS_KEY_TIMEZONE))
                         Settings->Timezone = json[JSON_SPIFFS_KEY_TIMEZONE].as<int>();
                     if (json.containsKey(JSON_SPIFFS_KEY_STATS2NV))
