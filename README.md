@@ -102,6 +102,8 @@ Rotas: `/api/status` · `/api/config` · `/api/fleet` · `/api/peers` · `/api/e
 
 O default é **DigiByte na FusionPool** (`dgb.fusionpool.pro:3332`, password `X`; BR, sem cadastro): dificuldade baixa = shares aceitos com frequência = feedback constante para aprender. Para os irmãos CPU/Android a recomendação é a porta `3333` (tier micro miners) da mesma pool. Perfis prontos no Config para BTC (lottery), BCH, XEC e PPC — detalhes e status de cada pool em [docs/POOLS.md](docs/POOLS.md). Quer independência total? Monte seu próprio nó+pool: [docs/SOLO-NODE.md](docs/SOLO-NODE.md).
 
+**Alertas no Telegram:** um nó CPU/Android sempre ligado (aba *Alerts* do Config dele) vigia toda a frota, placas incluídas, e avisa no Telegram quando um nó cai ou volta, uma pool cai e o fallback assume, a temperatura passa do limite, shares são rejeitados em sequência ou um nó fica online sem minerar. Detalhes em [criptohost_cpuminer](https://github.com/criptohost/criptohost_cpuminer).
+
 **Pool de fallback:** no Config, informe uma segunda pool (mesma moeda, mesma carteira). Se a principal recusar conexão 3 vezes seguidas, o nó passa para a fallback e testa a principal a cada 10 min, voltando sozinho. Vale para placa, PC e Android.
 
 ## ❓ Perguntas honestas
