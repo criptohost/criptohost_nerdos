@@ -4,6 +4,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/) · versionamento 
 
 ## [Unreleased]
 
+## [v0.4.2-alpha] — 2026-09-25
+
+### Added
+- Dashboard: aba **Alerts** (só em nós CPU/Android, via `criptohost_cpuminer` v0.3.2-cpu) — central de notificações Telegram para a frota inteira: nó caiu/voltou, fallback assumiu/voltou, temperatura acima do limite, shares rejeitados em sequência, online sem hashrate. A placa não muda de comportamento: só recebe o dashboard novo (`*-fs.bin`).
+
 ## [v0.4.1-alpha] — 2026-09-24
 
 ### Added

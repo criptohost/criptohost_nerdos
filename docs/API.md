@@ -34,6 +34,10 @@ Ring próprio de rejects e falhas de conexão (até 48), independente do live lo
 GET devolve `{pool, port, pool2, port2, wallet, password, timezone, hostname, ap_ssid, fw, hardware}` — `pool2`/`port2` é a pool de **fallback** (`""`/`0` = desligado).
 POST aceita o mesmo JSON (campos opcionais), valida (pool 4–128 chars, port 1–65535, wallet 8–79; `pool2` vazio desliga o fallback), persiste e **reinicia** (Save & Restart). Respostas: `200 {"ok":true,"restarting":true}` · `400 {"error":...}`.
 
+## Alertas (só CH Agent — CPU/Android)
+
+No agent, `GET/POST /api/config` também carrega `tg_token`, `tg_chat`, `alert_temp` (°C, default 70) e `alert_rejects` (default 5); `POST /api/alerts/test` envia uma mensagem de teste; `GET /api/alerts` devolve `{enabled, last_sent, last_error, nodes}`. O agent lê `/api/status` de cada nó da frota (placas incluídas) a cada 60 s — nenhum campo novo é exigido do firmware.
+
 ## GET /api/wifi · POST /api/wifi · GET /api/wifi/scan
 
 Troca da rede STA sem voltar ao captive portal.
